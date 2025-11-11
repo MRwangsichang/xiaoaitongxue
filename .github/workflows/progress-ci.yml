@@ -1,0 +1,33 @@
+name: Progress JSON CI
+
+on:
+  push:
+    paths: [ "progress.json" ]
+  pull_request:
+    paths: [ "progress.json" ]
+  workflow_dispatch: {}
+
+jobs:
+  validate_and_summary:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install jq
+        run: sudo apt-get update && sudo apt-get install -y jq
+
+      - name: Validate JSON syntax
+        run: jq . progress.json > /dev/null
+
+      - name: Write summary
+        run: |
+          echo "## progress.json 摘要" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- 项目：$(jq -r '.title // .project // \"未命名\"' progress.json)" >> $GITHUB_STEP_SUMMARY
+          echo "- 阶段：$(jq -r '.phase // \"未设置\"' progress.json)" >> $GITHUB_STEP_SUMMARY
+          echo "- 更新时间：$(jq -r '.updated_at // \"未填写\"' progress.json)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 原始内容（pretty print）" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`json" >> $GITHUB_STEP_SUMMARY
+          jq . progress.json >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
