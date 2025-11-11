@@ -1,0 +1,635 @@
+{
+  "metadata": {
+    "updated_at": "2025-11-06T20:56:00+08:00",
+    "version": "v1.0-wakeword",
+    "baseline_commit": "TBD (Git未初始化)",
+    "environment": "raspberry_pi_4b",
+    "project_root": "/home/MRwang/smart_assistant"
+  },
+  
+  "milestones": {
+    "completed": [
+      {
+        "id": "M0",
+        "name": "核心框架搭建",
+        "completed_at": "2025-10-11",
+        "deliverables": [
+          "MQTT消息总线",
+          "事件驱动架构(EventBus)",
+          "健康监控系统(HealthReporter)",
+          "配置管理(ConfigLoader)",
+          "结构化日志(Logger)"
+        ]
+      },
+      {
+        "id": "M1",
+        "name": "ASR语音识别",
+        "completed_at": "2025-10-19",
+        "deliverables": [
+          "讯飞实时流式ASR",
+          "WebSocket长连接",
+          "VAD语音活动检测",
+          "ASR模块独立运行"
+        ]
+      },
+      {
+        "id": "M2",
+        "name": "TTS语音合成",
+        "completed_at": "2025-10-29",
+        "deliverables": [
+          "讯飞x5超拟人TTS",
+          "Edge-TTS兜底",
+          "双提供商自动切换",
+          "HifiBerry DAC集成"
+        ]
+      },
+      {
+        "id": "M3",
+        "name": "Rules规则引擎",
+        "completed_at": "2025-10-28",
+        "deliverables": [
+          "规则匹配引擎",
+          "Grok AI兜底",
+          "proxychains4代理配置",
+          "退出词规则"
+        ]
+      },
+      {
+        "id": "M4",
+        "name": "Vision人脸识别",
+        "completed_at": "2025-11-04",
+        "deliverables": [
+          "OpenCV LBPH识别",
+          "142张训练数据(v2模型)",
+          "30分钟扫描间隔",
+          "Vision Scanner服务"
+        ]
+      },
+      {
+        "id": "M5",
+        "name": "Greeting问候服务",
+        "completed_at": "2025-11-04",
+        "deliverables": [
+          "人脸识别触发问候",
+          "16条问候模板",
+          "Grok随机选择",
+          "问候服务独立运行"
+        ]
+      },
+      {
+        "id": "M6",
+        "name": "Wakeword唤醒词服务",
+        "completed_at": "2025-11-06",
+        "deliverables": [
+          "8条唤醒词检测",
+          "15条回复模板",
+          "5秒冷却机制",
+          "Rules模块唤醒词过滤"
+        ]
+      }
+    ],
+    
+    "in_progress": [],
+    
+    "planned": [
+      {
+        "id": "M7",
+        "name": "记忆系统MVP",
+        "target_date": "2025-11-20",
+        "priority": "P0",
+        "deliverables": [
+          "SQLite数据库表结构",
+          "基础存储API(save/recall)",
+          "记忆服务模块",
+          "单元测试(覆盖率>80%)"
+        ],
+        "depends_on": ["Git仓库初始化"],
+        "reference": "docs/TASKS_CODE.md#MVP"
+      },
+      {
+        "id": "M8",
+        "name": "记忆系统M1",
+        "target_date": "2025-11-27",
+        "priority": "P1",
+        "deliverables": [
+          "时间衰减算法",
+          "标签系统(手动+自动)",
+          "性能监控(Metrics)"
+        ],
+        "depends_on": ["M7"],
+        "reference": "docs/TASKS_CODE.md#M1"
+      },
+      {
+        "id": "M9",
+        "name": "记忆系统M2",
+        "target_date": "2025-12-04",
+        "priority": "P1",
+        "deliverables": [
+          "Rules模块集成记忆召回",
+          "Grok prompt优化",
+          "记忆管理CLI工具"
+        ],
+        "depends_on": ["M8"],
+        "reference": "docs/TASKS_CODE.md#M2"
+      }
+    ]
+  },
+  
+  "modules": [
+    {
+      "name": "asr_module",
+      "status": "running",
+      "health": "degraded",
+      "version": "1.0.0",
+      "entry_point": "modules/asr/asr_module.py",
+      "last_modified": "2025-10-19T15:11:00+08:00",
+      "pid": 3908,
+      "uptime_hours": 10.7,
+      "evidence": "ps aux output, claude.txt line 409",
+      "issues": [
+        {
+          "id": "ASR-001",
+          "severity": "critical",
+          "description": "音频设备冲突(PulseAudio占用)",
+          "impact": "无法录音,只能手动MQTT测试",
+          "reference": "docs/GAPS_TODO.md#GAPS-P0-001"
+        }
+      ],
+      "backup": null,
+      "config_files": ["config/asr.yml"]
+    },
+    
+    {
+      "name": "rules_module",
+      "status": "running",
+      "health": "healthy",
+      "version": "1.0.2",
+      "entry_point": "modules/rules/rules_module.py",
+      "last_modified": "2025-11-06T19:50:43+08:00",
+      "pid": 4090,
+      "uptime_hours": 10.7,
+      "evidence": "ps aux output, claude.txt line 411",
+      "recent_changes": [
+        {
+          "date": "2025-11-06",
+          "description": "添加唤醒词过滤逻辑",
+          "backup": "modules/rules/rules_module.py.bak_1762429443"
+        },
+        {
+          "date": "2025-11-06",
+          "description": "清空stories数组",
+          "backup": "data/rules.json.bak_1762410609"
+        }
+      ],
+      "issues": [],
+      "config_files": ["config/rules.yml", "data/rules.json"]
+    },
+    
+    {
+      "name": "tts_module",
+      "status": "running",
+      "health": "healthy",
+      "version": "1.0.0",
+      "entry_point": "modules/tts/tts_module.py",
+      "last_modified": "2025-10-29T16:29:00+08:00",
+      "pid": 4007,
+      "uptime_hours": 10.7,
+      "evidence": "ps aux output, claude.txt line 410",
+      "issues": [],
+      "backup": "backups/tts_stable_20251029_225218/",
+      "config_files": ["config/tts.yml"]
+    },
+    
+    {
+      "name": "wakeword_service",
+      "status": "running",
+      "health": "healthy",
+      "version": "1.0.0",
+      "entry_point": "modules/wakeword/wakeword_service.py",
+      "last_modified": "2025-11-06T14:01:00+08:00",
+      "pid": 6244,
+      "uptime_hours": 10.6,
+      "evidence": "ps aux output, claude.txt line 417",
+      "recent_changes": [
+        {
+          "date": "2025-11-06",
+          "description": "新建唤醒词服务",
+          "backup": null
+        }
+      ],
+      "issues": [],
+      "config_files": ["config/wakeword.yml", "config/grok_scenarios.yaml"]
+    },
+    
+    {
+      "name": "greeting_service",
+      "status": "running",
+      "health": "healthy",
+      "version": "1.0.0",
+      "entry_point": "modules/greeting/greeting_service.py",
+      "last_modified": "2025-11-04T01:16:00+08:00",
+      "pid": 4195,
+      "uptime_hours": 10.7,
+      "evidence": "ps aux output, claude.txt line 413",
+      "issues": [],
+      "config_files": ["config/greeting.yml", "config/grok_scenarios.yaml"]
+    },
+    
+    {
+      "name": "vision_scanner",
+      "status": "running",
+      "health": "healthy",
+      "version": "2.0.0",
+      "entry_point": "modules/vision/scanner.py",
+      "last_modified": "2025-11-04T20:05:00+08:00",
+      "pid": 4280,
+      "uptime_hours": 10.7,
+      "cpu_usage_percent": 11.7,
+      "evidence": "ps aux output, claude.txt line 415",
+      "issues": [],
+      "config_files": ["config/vision_config.yaml"],
+      "notes": "v2模型(142张训练数据),准确率~90%"
+    },
+    
+    {
+      "name": "memory_service",
+      "status": "not_started",
+      "health": "n/a",
+      "version": null,
+      "entry_point": "modules/memory/memory_service.py (待创建)",
+      "evidence": null,
+      "issues": [
+        {
+          "id": "MEM-001",
+          "severity": "info",
+          "description": "记忆系统未实现",
+          "impact": "对话无上下文记忆",
+          "reference": "docs/TASKS_CODE.md"
+        }
+      ],
+      "target_completion": "2025-11-20"
+    }
+  ],
+  
+  "infrastructure": {
+    "mqtt": {
+      "status": "running",
+      "broker": "mosquitto",
+      "address": "127.0.0.1:1883",
+      "pid": 699,
+      "evidence": "netstat output, claude.txt line 420-421",
+      "health": "healthy"
+    },
+    
+    "proxy": {
+      "status": "running",
+      "type": "socks5",
+      "address": "127.0.0.1:1080",
+      "provider": "闪连VPN",
+      "health": "unknown (待验证)",
+      "used_by": ["rules_module", "wakeword_service", "greeting_service"]
+    },
+    
+    "git": {
+      "status": "not_initialized",
+      "repository": null,
+      "current_branch": null,
+      "last_commit": null,
+      "issues": [
+        {
+          "id": "GIT-001",
+          "severity": "critical",
+          "description": "项目未使用Git版本控制",
+          "impact": "无法追踪变更,回滚困难,协作受限",
+          "reference": "docs/GAPS_TODO.md#GAPS-P0-002"
+        }
+      ]
+    }
+  },
+  
+  "hardware": {
+    "camera": {
+      "model": "IMX219 8MP",
+      "device": "/dev/video0 (推测,待验证)",
+      "resolution": "640x480",
+      "framerate": 10,
+      "status": "operational",
+      "evidence": "config/vision_config.yaml",
+      "issues": [
+        {
+          "id": "CAM-001",
+          "severity": "low",
+          "description": "设备路径未验证",
+          "reference": "docs/GAPS_TODO.md#GAPS-P1-004"
+        }
+      ]
+    },
+    
+    "microphone": {
+      "model": "USB PnP Sound Device",
+      "device": "plughw:1,0",
+      "card": 1,
+      "sample_rate": 16000,
+      "channels": 1,
+      "status": "conflict",
+      "evidence": "config/asr.yml, arecord -l output",
+      "issues": [
+        {
+          "id": "MIC-001",
+          "severity": "critical",
+          "description": "被PulseAudio占用",
+          "reference": "docs/GAPS_TODO.md#GAPS-P0-001"
+        }
+      ]
+    },
+    
+    "speaker": {
+      "model": "HifiBerry DAC",
+      "device": "plughw:0,0",
+      "card": 0,
+      "sample_rate": 16000,
+      "status": "operational",
+      "evidence": "config/tts.yml",
+      "issues": []
+    }
+  },
+  
+  "ports": [
+    {
+      "name": "mqtt",
+      "protocol": "tcp",
+      "address": "127.0.0.1:1883",
+      "status": "listening",
+      "process": "mosquitto",
+      "pid": 699,
+      "evidence": "netstat output, claude.txt line 420"
+    },
+    {
+      "name": "mqtt_ipv6",
+      "protocol": "tcp6",
+      "address": "::1:1883",
+      "status": "listening",
+      "process": "mosquitto",
+      "pid": 699,
+      "evidence": "netstat output, claude.txt line 421"
+    },
+    {
+      "name": "socks5_proxy",
+      "protocol": "tcp",
+      "address": "127.0.0.1:1080",
+      "status": "assumed_running",
+      "process": "闪连VPN",
+      "evidence": "proxychains4.conf, 未验证"
+    }
+  ],
+  
+  "performance": {
+    "system": {
+      "platform": "Raspberry Pi 4B",
+      "os": "Debian GNU/Linux (Bookworm)",
+      "kernel": "6.12.34+rpt-rpi-v8",
+      "python_version": "3.11.2"
+    },
+    
+    "metrics": {
+      "uptime_hours": 10.7,
+      "total_processes": 6,
+      "total_memory_mb": 3871,
+      "memory_used_mb": "~1200 (估算)",
+      "disk_usage": "TBD",
+      "log_size_mb": "TBD"
+    },
+    
+    "module_performance": [
+      {
+        "module": "vision_scanner",
+        "cpu_percent": 11.7,
+        "memory_mb": 424,
+        "notes": "扫描时CPU峰值,间歇性"
+      },
+      {
+        "module": "rules_module",
+        "cpu_percent": "<1",
+        "memory_mb": 34,
+        "notes": "正常"
+      },
+      {
+        "module": "wakeword_service",
+        "cpu_percent": "<1",
+        "memory_mb": 34,
+        "notes": "正常"
+      }
+    ],
+    
+    "latency": {
+      "wakeword_response_ms": 1500,
+      "tts_playback_ms": "<500",
+      "mqtt_message_ms": "<10",
+      "grok_api_call_ms": "TBD",
+      "face_recognition_ms": "TBD"
+    }
+  },
+  
+  "risks": [
+    {
+      "id": "R1",
+      "category": "technical",
+      "severity": "critical",
+      "description": "ASR音频设备冲突",
+      "probability": "high",
+      "impact": "high",
+      "mitigation": "尝试重启音频服务/更换音频库/使用USB独占模式",
+      "owner": "待分配",
+      "reference": "docs/GAPS_TODO.md#GAPS-P0-001"
+    },
+    {
+      "id": "R2",
+      "category": "infrastructure",
+      "severity": "critical",
+      "description": "无Git版本控制",
+      "probability": "high",
+      "impact": "high",
+      "mitigation": "立即初始化Git仓库并创建首次提交",
+      "owner": "王总",
+      "reference": "docs/GAPS_TODO.md#GAPS-P0-002"
+    },
+    {
+      "id": "R3",
+      "category": "network",
+      "severity": "medium",
+      "description": "Grok API代理不稳定",
+      "probability": "medium",
+      "impact": "medium",
+      "mitigation": "增加本地规则兜底,监控代理状态",
+      "owner": "未分配",
+      "reference": "docs/DECISIONS.md#ADR-005"
+    },
+    {
+      "id": "R4",
+      "category": "performance",
+      "severity": "low",
+      "description": "日志文件无限增长",
+      "probability": "high",
+      "impact": "low",
+      "mitigation": "配置logrotate或定期清理脚本",
+      "owner": "未分配",
+      "reference": "docs/GAPS_TODO.md#GAPS-P2-002"
+    },
+    {
+      "id": "R5",
+      "category": "data",
+      "severity": "medium",
+      "description": "SQLite并发写入冲突(记忆系统)",
+      "probability": "medium",
+      "impact": "high",
+      "mitigation": "使用WAL模式+重试机制",
+      "owner": "Claude Code",
+      "reference": "docs/TASKS_CODE.md#风险与缓解"
+    }
+  ],
+  
+  "backups": [
+    {
+      "type": "module_code",
+      "path": "modules/rules/rules_module.py.bak_1762429443",
+      "date": "2025-11-06T19:44:00+08:00",
+      "description": "Rules模块添加唤醒词过滤前的备份"
+    },
+    {
+      "type": "config",
+      "path": "data/rules.json.bak_1762410609",
+      "date": "2025-11-06T14:30:00+08:00",
+      "description": "清空stories数组前的备份"
+    },
+    {
+      "type": "config",
+      "path": "config/grok_scenarios.yaml.bak_1762363372",
+      "date": "2025-11-06T01:22:00+08:00",
+      "description": "添加退出词回复模板前的备份"
+    },
+    {
+      "type": "full_project",
+      "path": "backups/FINAL_ASR_LOCKED/",
+      "date": "2025-10-19",
+      "description": "ASR模块稳定版本(锁定)"
+    },
+    {
+      "type": "full_project",
+      "path": "backups/grok_stable_20251028_020642/",
+      "date": "2025-10-28",
+      "description": "Grok集成稳定版本"
+    },
+    {
+      "type": "full_project",
+      "path": "backups/tts_stable_20251029_225218/",
+      "date": "2025-10-29",
+      "description": "TTS模块稳定版本"
+    }
+  ],
+  
+  "documentation_status": {
+    "core_docs": {
+      "PROJECT_BRIEF.md": "complete",
+      "MODULES_MATRIX.md": "complete",
+      "RUNBOOK.md": "complete",
+      "DECISIONS.md": "complete",
+      "COMMAND_LOG.md": "complete",
+      "BASELINE.md": "complete",
+      "TASKS_CODE.md": "complete",
+      "GAPS_TODO.md": "complete"
+    },
+    
+    "config_examples": {
+      ".env.example": "complete"
+    },
+    
+    "state_tracking": {
+      "handover_context.md": "complete",
+      "progress.json": "complete"
+    },
+    
+    "missing_docs": [
+      "API接口文档(待补充)",
+      "故障排查手册(部分完成)",
+      "性能调优指南(待补充)"
+    ]
+  },
+  
+  "test_coverage": {
+    "unit_tests": {
+      "total": 0,
+      "passed": 0,
+      "failed": 0,
+      "coverage_percent": 0,
+      "notes": "单元测试待补充(记忆系统优先)"
+    },
+    
+    "integration_tests": {
+      "total": 0,
+      "passed": 0,
+      "notes": "端到端测试待补充"
+    },
+    
+    "manual_tests": {
+      "wakeword_service": "passed (手动MQTT测试)",
+      "greeting_service": "passed (人脸识别触发)",
+      "tts_playback": "passed (讯飞x5正常)",
+      "asr_recording": "failed (音频设备冲突)",
+      "rules_grok_fallback": "passed (代理正常)"
+    }
+  },
+  
+  "next_actions": [
+    {
+      "priority": "P0",
+      "task": "初始化Git仓库",
+      "owner": "王总或Claude Code",
+      "due_date": "2025-11-07",
+      "reference": "docs/GAPS_TODO.md#GAPS-P0-002"
+    },
+    {
+      "priority": "P0",
+      "task": "解决ASR音频设备冲突",
+      "owner": "待分配",
+      "due_date": "2025-11-08",
+      "reference": "docs/GAPS_TODO.md#GAPS-P0-001"
+    },
+    {
+      "priority": "P1",
+      "task": "开始实现记忆系统MVP",
+      "owner": "Claude Code",
+      "due_date": "2025-11-20",
+      "reference": "docs/TASKS_CODE.md#MVP"
+    },
+    {
+      "priority": "P1",
+      "task": "补充环境变量文档",
+      "owner": "王总",
+      "due_date": "2025-11-08",
+      "reference": "docs/GAPS_TODO.md#GAPS-P1-002"
+    },
+    {
+      "priority": "P2",
+      "task": "生成文件哈希值",
+      "owner": "Claude Code",
+      "due_date": "2025-11-09",
+      "reference": "docs/GAPS_TODO.md#GAPS-P1-001"
+    }
+  ],
+  
+  "version_history": [
+    {
+      "version": "v1.0-wakeword",
+      "date": "2025-11-06",
+      "description": "唤醒词服务集成完成,MVP功能齐全",
+      "commit": "TBD (Git未初始化)",
+      "highlights": [
+        "新增Wakeword服务(8条唤醒词)",
+        "解决双重回复问题(Rules过滤)",
+        "清空Stories规则避免干扰",
+        "添加退出词回复模板(10条)",
+        "生成完整交接文档(11个文件)"
+      ]
+    }
+  ]
+}
