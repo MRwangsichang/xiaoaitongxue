@@ -2,17 +2,20 @@ name: Progress JSON CI
 
 on:
   push:
-    paths: [ "progress.json" ]
+    paths:
+      - "progress.json"
   pull_request:
-    paths: [ "progress.json" ]
-  workflow_dispatch: {}
+    paths:
+      - "progress.json"
+  workflow_dispatch:
 
 jobs:
   validate_and_summary:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      pull-requests: write   # 允许在 PR 里发评论
+      pull-requests: write
+
     steps:
       - uses: actions/checkout@v4
 
@@ -23,61 +26,41 @@ jobs:
         id: val
         run: |
           if jq . progress.json >/dev/null; then
-            echo "ok=true" >> $GITHUB_OUTPUT
+            echo "ok=true" >> "$GITHUB_OUTPUT"
           else
-            echo "ok=false" >> $GITHUB_OUTPUT
+            echo "ok=false" >> "$GITHUB_OUTPUT"
           fi
 
-     - name: Write run summary (Actions → Summary)
+      - name: Write run summary (Actions → Summary)
         run: |
-          echo "## progress.json 摘要" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "- 项目：$(jq -r '.title // .project // "未命名"' progress.json)" >> $GITHUB_STEP_SUMMARY
-          echo "- 阶段：$(jq -r '.phase // "未设置"' progress.json)" >> $GITHUB_STEP_SUMMARY
-          echo "- 更新时间：$(jq -r '.updated_at // "未填写"' progress.json)" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### 原始内容（pretty）" >> $GITHUB_STEP_SUMMARY
-          echo '```json' >> $GITHUB_STEP_SUMMARY
-          jq . progress.json >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
-
-
+          echo "## progress.json 摘要" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "- 项目：$(jq -r '.title // .project // "未命名"' progress.json)" >> "$GITHUB_STEP_SUMMARY"
+          echo "- 阶段：$(jq -r '.phase // "未设置"' progress.json)" >> "$GITHUB_STEP_SUMMARY"
+          echo "- 更新时间：$(jq -r '.updated_at // "未填写"' progress.json)" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo '```json' >> "$GITHUB_STEP_SUMMARY"
+          jq . progress.json >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
 
       - name: Build PR comment markdown
         run: |
           PROJECT=$(jq -r '.title // .project // "未命名"' progress.json)
           PHASE=$(jq -r '.phase // "未设置"' progress.json)
           UPDATED=$(jq -r '.updated_at // "未填写"' progress.json)
-          echo "### progress.json 验证结果：$([ '${{ steps.val.outputs.ok }}' = 'true' ] && echo '✅ 通过' || echo '❌ 失败')" > comment.md
+          echo "### progress.json 验证结果: $([ '${{ steps.val.outputs.ok }}' = 'true' ] && echo '✅ 通过' || echo '❌ 失败')" > comment.md
           echo "" >> comment.md
           echo "- 项目：$PROJECT" >> comment.md
           echo "- 阶段：$PHASE" >> comment.md
           echo "- 更新时间：$UPDATED" >> comment.md
-          echo "" >> comment.md
-          echo "#### 里程碑" >> comment.md
-          jq -r '.milestones[]? | "- " + (.title // .name // "未命名") + (if .due then "  ⏰ " + .due else "" end) + (if .owner then "  👤 " + (.owner|tostring) else "" end)' progress.json >> comment.md || true
-          echo "" >> comment.md
-          echo "#### 原始 JSON（pretty）" >> comment.md
-          echo "\`\`\`json" >> comment.md
-          jq . progress.json >> comment.md || cat progress.json >> comment.md
-          echo "\`\`\`" >> comment.md
 
       - name: Post PR comment
         if: github.event_name == 'pull_request'
-        uses: actions/github-script@v7
+        uses: marocchino/sticky-pull-request-comment@v2
         with:
-          script: |
-            const fs = require('fs');
-            const body = fs.readFileSync('comment.md','utf8');
-            await github.rest.issues.createComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: context.issue.number,
-              body
-            });
+          header: progress-json-summary
+          path: comment.md
 
       - name: Fail if invalid
-        if: steps.val.outputs.ok == 'false'
-        run: |
-          echo "Invalid JSON in progress.json" >&2
-          exit 1
+        if: steps.val.outputs.ok != 'true'
+        run: exit 1
