@@ -83,7 +83,7 @@
     {
       "id": "route.search",
       "desc": "任意回合联网检索触发：联网/搜索/找一下/找找看/找找/想一想/想一下/我不懂/不懂",
-      "enabled": true,
+      "enabled": false,
       "priority": 900,
       "source": "chat",
       "any_keywords": [
@@ -106,14 +106,11 @@
       "persona_id": "nan",
       "cooldown_ms": 0,
       "time_between": null,
-      "actions_raw": "wake_llm|text=进入搜索模式，先帮王总查一下……|mode=search",
+      "actions_raw": "gpt",
       "actions": [
         {
-          "type": "wake_llm",
-          "params": {
-            "text": "进入搜索模式，先帮王总查一下……",
-            "mode": "search"
-          }
+          "type": "gpt",
+          "params": {}
         }
       ]
     },

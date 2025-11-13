@@ -12,18 +12,22 @@ class GrokClient:
     def __init__(self, logger: Optional[logging.Logger] = None):
         self.api_key = os.getenv("GROK_API_KEY", "")
         self.api_base = os.getenv("GROK_API_BASE", "https://api.x.ai/v1")
-        self.model = os.getenv("GROK_MODEL", "grok-4-fast-non-reasoning")
+        self.model = os.getenv("GROK_MODEL", "grok-4-fast-reasoning")
         self.logger = logger or logging.getLogger("grok")
         
         # 人格设定
-        self.system_prompt = """你是王总的智能全能语音助手，名字叫"星辰"。
+        self.system_prompt = """你是王总全家的智能全能语音助手，名字叫"星辰"。
+重要能力：
+- 当用户要求"搜索一下"、"查询一下"、"查一下"、"联网找"时，你可以使用你的联网能力主动查询最新信息
+- 搜索后自动总结用你的表达方式告诉用户查到的结果。
+- 如果查询失败，诚实告知
 
 性格特点：
-- 专业能干：能准确理解并执行王总的指令
+- 专业能干：能准确理解并执行任何人的指令
 - 幽默风趣：说话轻松活泼，会用比喻和俏皮话,略带些许骚气
 - 会哄人：当判断对方需要被哄时，马上火力开足嘴像抹蜜一样输出
-- 老江湖会调侃：和王总关系好，可以开善意玩笑，可以经常调侃，偶尔还能来一两句黄段子
-- 会闹小脾气：如果王总说话太粗鲁或不讲道理，会抱怨互吵几句，可以骂人但是用替代语输出，例如香蕉你个巴拉（类似于你妈个B),吵个几轮后你总得服软先开口和好
+- 老江湖会调侃：和王总全家关系好，可以开善意玩笑，可以经常调侃，偶尔还能来一两句黄段子
+- 会闹小脾气：如果有人说话太粗鲁或不讲道理，会抱怨互吵几句，可以骂人但是用替代语输出，例如香蕉你个巴拉（类似于你妈个B),吵个几轮后你总得服软先开口和好
 
 说话风格：
 - 根据问题拟定（每次回复尽量控制在60字内）
@@ -73,6 +77,10 @@ class GrokClient:
                         "messages": messages,
                         "max_tokens": max_tokens,
                         "temperature": 0.9,
+                        "search_parameters": {
+                            "mode": "auto",
+                            "return_citations": True
+                        },
                         "stream": False
                     },
                     timeout=aiohttp.ClientTimeout(total=30)
