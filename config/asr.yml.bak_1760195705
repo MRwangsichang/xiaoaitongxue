@@ -1,0 +1,39 @@
+# ASR Module Configuration
+# Provider: mock (offline testing) or cloud (iFlytek WebSocket)
+provider: mock  # Default to mock; change to cloud after credentials provided
+
+# Audio device settings
+device: default  # ALSA device name or "default"
+rate: 16000      # Sample rate in Hz (iFlytek requires 16000)
+channels: 1      # Mono audio
+
+# VAD (Voice Activity Detection) parameters - for cloud provider
+vad:
+  start_thresh: 0.3      # Start of speech threshold (0-1)
+  tail_thresh: 0.2       # End of speech threshold (0-1)
+  tail_sil_ms: 800       # Tail silence duration in ms
+  min_chunk_ms: 200      # Minimum speech chunk duration in ms
+
+# Session management
+max_session_sec: 60      # Maximum session duration (auto-stop)
+dedup_ms: 2000           # Deduplication window in ms (same text within window = skip)
+
+# Reconnection backoff (for cloud provider)
+reconnect:
+  initial_delay: 1       # Initial retry delay in seconds
+  max_delay: 30          # Maximum retry delay in seconds
+  multiplier: 2          # Backoff multiplier
+
+# Health reporter
+health_interval: 10      # Health heartbeat interval in seconds
+
+# Authentication (cloud provider only)
+# Credentials loaded from environment variables:
+# - XF_APPID
+# - XF_API_KEY
+# - XF_API_SECRET
+auth:
+  env_keys:
+    - XF_APPID
+    - XF_API_KEY
+    - XF_API_SECRET

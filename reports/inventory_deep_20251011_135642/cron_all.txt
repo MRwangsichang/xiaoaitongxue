@@ -1,0 +1,20 @@
+== /etc/cron.* 中的匹配 ==
+/etc/cron.d/.placeholder:2:# This file is a simple placeholder to keep dpkg from removing this directory
+/etc/cron.daily/apt-compat:7:# runs as much as possible to avoid hitting the mirrors all at the
+/etc/cron.daily/apt-compat:9:# cron.daily time
+/etc/cron.daily/apt-compat:17:    #       0 (true)    System is on main power
+/etc/cron.daily/apt-compat:18:    #       1 (false)   System is not on main power
+/etc/cron.daily/apt-compat:54:# run daily job
+/etc/cron.daily/apt-compat:55:exec /usr/lib/apt/apt.systemd.daily
+/etc/cron.daily/.placeholder:2:# This file is a simple placeholder to keep dpkg from removing this directory
+/etc/cron.daily/man-db:3:# man-db cron daily
+/etc/cron.hourly/.placeholder:2:# This file is a simple placeholder to keep dpkg from removing this directory
+/etc/cron.hourly/fake-hwclock:4:# a power failure or other crash
+/etc/cron.monthly/.placeholder:2:# This file is a simple placeholder to keep dpkg from removing this directory
+/etc/cron.weekly/.placeholder:2:# This file is a simple placeholder to keep dpkg from removing this directory
+/etc/cron.yearly/.placeholder:2:# This file is a simple placeholder to keep dpkg from removing this directory
+
+== /etc/crontab ==
+19:25 6	* * *	root	test -x /usr/sbin/anacron || { cd / && run-parts --report /etc/cron.daily; }
+
+== 所有用户 crontab（尝试枚举） ==

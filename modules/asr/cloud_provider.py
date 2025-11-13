@@ -1,0 +1,302 @@
+"""
+讯飞实时语音识别 Provider
+WebSocket API: wss://iat-api.xfyun.cn/v2/iat
+"""
+import asyncio
+import base64
+import hashlib
+import hmac
+import json
+import time
+import os
+from datetime import datetime
+from urllib.parse import urlencode
+import pyaudio
+import websockets
+
+
+class CloudProvider:
+    """讯飞云端实时ASR"""
+    
+    def __init__(self, config, logger):
+        self.config = config
+        self.logger = logger
+        self.running = False
+        self.ws = None
+        self.audio_stream = None
+        self.p = None
+        
+        # 讯飞凭据
+        self.appid = os.getenv("XF_APPID")
+        self.api_key = os.getenv("XF_API_KEY")
+        self.api_secret = os.getenv("XF_API_SECRET")
+        
+        if not all([self.appid, self.api_key, self.api_secret]):
+            raise ValueError("Missing iFlytek credentials (XF_APPID/XF_API_KEY/XF_API_SECRET)")
+        
+        # 音频参数
+        self.sample_rate = config.get("rate", 16000)
+        self.channels = config.get("channels", 1)
+        self.chunk_size = config.get("chunk_size", 1280)
+        
+    async def start(self, callback):
+        """启动实时识别"""
+        if self.running:
+            self.logger.warning("Cloud provider already running")
+            return
+            
+        self.running = True
+        self.callback = callback
+        
+        self.logger.info("Cloud provider starting...")
+        asyncio.create_task(self._run())
+        
+    async def stop(self):
+        """停止识别"""
+        self.logger.info("Stopping cloud provider...")
+        self.running = False
+        
+        if self.ws:
+            try:
+                await self.ws.close()
+            except:
+                pass
+            self.ws = None
+        
+        if self.audio_stream:
+            try:
+                self.audio_stream.stop_stream()
+                self.audio_stream.close()
+            except:
+                pass
+            self.audio_stream = None
+            
+        if self.p:
+            try:
+                self.p.terminate()
+            except:
+                pass
+            self.p = None
+            
+        self.logger.info("Cloud provider stopped")
+        
+    async def _run(self):
+        """主循环"""
+        while self.running:
+            try:
+                url = self._create_url()
+                self.logger.info(f"Connecting to iFlytek ASR...")
+                
+                async with websockets.connect(url) as ws:
+                    self.ws = ws
+                    self.logger.info("✓ Connected to iFlytek")
+                    
+                    self._init_audio()
+                    
+                    send_task = asyncio.create_task(self._send_audio())
+                    recv_task = asyncio.create_task(self._receive_results())
+                    
+                    done, pending = await asyncio.wait(
+                        [send_task, recv_task],
+                        return_when=asyncio.FIRST_COMPLETED
+                    )
+                    
+                    for task in pending:
+                        task.cancel()
+                        
+            except websockets.exceptions.WebSocketException as e:
+                self.logger.error(f"WebSocket error: {e}")
+                if self.running:
+                    self.logger.info("Reconnecting in 3 seconds...")
+                    await asyncio.sleep(3)
+                    
+            except Exception as e:
+                self.logger.error(f"Provider error: {e}", exc_info=True)
+                if self.running:
+                    await asyncio.sleep(3)
+                    
+            finally:
+                if self.audio_stream:
+                    try:
+                        self.audio_stream.stop_stream()
+                        self.audio_stream.close()
+                    except:
+                        pass
+                    self.audio_stream = None
+                    
+    def _create_url(self):
+        """构建讯飞WebSocket URL"""
+        host = "iat-api.xfyun.cn"
+        path = "/v2/iat"
+        
+        now = datetime.utcnow()
+        date = now.strftime("%a, %d %b %Y %H:%M:%S GMT")
+        
+        signature_origin = f"host: {host}\ndate: {date}\nGET {path} HTTP/1.1"
+        
+        signature_sha = hmac.new(
+            self.api_secret.encode('utf-8'),
+            signature_origin.encode('utf-8'),
+            digestmod=hashlib.sha256
+        ).digest()
+        signature_sha_base64 = base64.b64encode(signature_sha).decode('utf-8')
+        
+        authorization_origin = (
+            f'api_key="{self.api_key}", '
+            f'algorithm="hmac-sha256", '
+            f'headers="host date request-line", '
+            f'signature="{signature_sha_base64}"'
+        )
+        authorization = base64.b64encode(authorization_origin.encode('utf-8')).decode('utf-8')
+        
+        params = {
+            "authorization": authorization,
+            "date": date,
+            "host": host
+        }
+        
+        url = f"wss://{host}{path}?{urlencode(params)}"
+        return url
+        
+    def _init_audio(self):
+        """初始化音频采集"""
+        if self.p is None:
+            self.p = pyaudio.PyAudio()
+            
+        device_name = self.config.get("device", "default")
+        device_index = None
+        
+        if device_name != "default":
+            for i in range(self.p.get_device_count()):
+                info = self.p.get_device_info_by_index(i)
+                if device_name in info['name']:
+                    device_index = i
+                    break
+                    
+        self.audio_stream = self.p.open(
+            format=pyaudio.paInt16,
+            channels=self.channels,
+            rate=self.sample_rate,
+            input=True,
+            input_device_index=device_index,
+            frames_per_buffer=self.chunk_size
+        )
+        
+        self.logger.info(f"✓ Audio stream opened: {self.sample_rate}Hz, {self.channels}ch")
+        
+    async def _send_audio(self):
+        """发送音频"""
+        try:
+            start_params = {
+                "common": {"app_id": self.appid},
+                "business": {
+                    "language": "zh_cn",
+                    "domain": "iat",
+                    "accent": "mandarin",
+                    "vad_eos": 800,
+                    "dwa": "wpgs"
+                },
+                "data": {
+                    "status": 0,
+                    "format": "audio/L16;rate=16000",
+                    "encoding": "raw",
+                    "audio": ""
+                }
+            }
+            
+            await self.ws.send(json.dumps(start_params))
+            self.logger.debug("Sent start params")
+            
+            frame_count = 0
+            while self.running and self.audio_stream:
+                audio_data = await asyncio.get_event_loop().run_in_executor(
+                    None,
+                    self.audio_stream.read,
+                    self.chunk_size,
+                    False
+                )
+                
+                audio_b64 = base64.b64encode(audio_data).decode('utf-8')
+                
+                frame = {
+                    "data": {
+                        "status": 1,
+                        "format": "audio/L16;rate=16000",
+                        "encoding": "raw",
+                        "audio": audio_b64
+                    }
+                }
+                
+                await self.ws.send(json.dumps(frame))
+                frame_count += 1
+                
+                if frame_count % 50 == 0:
+                    self.logger.debug(f"Sent {frame_count} audio frames")
+                    
+            end_frame = {
+                "data": {
+                    "status": 2,
+                    "format": "audio/L16;rate=16000",
+                    "encoding": "raw",
+                    "audio": ""
+                }
+            }
+            await self.ws.send(json.dumps(end_frame))
+            self.logger.info("Audio stream ended")
+            
+        except Exception as e:
+            self.logger.error(f"Send audio error: {e}")
+            raise
+            
+    async def _receive_results(self):
+        """接收识别结果"""
+        try:
+            async for message in self.ws:
+                result = json.loads(message)
+                
+                if result.get("code") != 0:
+                    self.logger.error(f"ASR error: {result.get('message')}")
+                    continue
+                    
+                data = result.get("data", {})
+                status = data.get("status", 0)
+                
+                if "result" in data:
+                    ws_list = data["result"].get("ws", [])
+                    text_parts = []
+                    
+                    for ws in ws_list:
+                        for cw in ws.get("cw", []):
+                            word = cw.get("w", "")
+                            text_parts.append(word)
+                            
+                    text = "".join(text_parts).strip()
+                    
+                    
+                    # 在status!=2时保存有效内容
+                    if status != 2 and text and len(text) > 1:
+                        self._last_result = text
+                    
+                    # status=2时发布之前保存的结果
+                    if status == 2 and hasattr(self, '_last_result') and self._last_result:
+                        await self.callback({
+                            "text": self._last_result,
+                            "lang": "zh-CN",
+                            "confidence": 0.95,
+                            "ts": time.time(),
+                            "partial": False
+                        })
+                        self.logger.info(f"✓ Final result: {self._last_result}")
+                        self._last_result = ""  # 清空，避免重复
+                        # 主动关闭WebSocket，不等讯飞超时
+                        # 主动关闭WebSocket，不等讯飞超时
+                        if self.ws:
+                            try:
+                                await self.ws.close()
+                                self.logger.debug("WebSocket主动关闭，准备下一轮")
+                            except Exception:
+                                pass  # 关闭失败不影响重连
+                            
+        except Exception as e:
+            self.logger.error(f"Receive results error: {e}")
+            raise

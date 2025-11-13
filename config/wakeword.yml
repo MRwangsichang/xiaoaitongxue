@@ -1,0 +1,44 @@
+# ==================== MQTT (required by ConfigLoader) ====================
+mqtt:
+  broker: localhost
+  port: 1883
+  qos: 1
+  keepalive: 60
+
+# ==================== Logging (required by ConfigLoader) ====================
+logging:
+  level: INFO
+  dir: logs
+  rotate_days: 7
+
+# ==================== System (required by ConfigLoader) ====================
+system:
+  project_root: /home/MRwang/smart_assistant
+  service_prefix: sa
+
+# ==================== Wakeword-specific config ====================
+# 订阅的ASR文本主题
+subscribe_topic: "sa/asr/text"
+
+# 发布的TTS主题
+tts_topic: "sa/tts/say"
+
+# GROK场景配置文件路径
+grok_scenarios_file: "config/grok_scenarios.yaml"
+
+# 唤醒词列表
+wakewords:
+  - "星辰在吗"
+  - "在吗星辰"
+  - "星辰星辰"
+  - "星辰出来"
+  - "你好星辰"
+  - "星辰滚出来"
+  - "屌毛星辰出来"
+  - "老辰出来"
+
+# 冷却时间（秒）- 避免短时间内重复唤醒
+cooldown_seconds: 5
+
+# 健康心跳间隔（秒）
+health_interval: 10

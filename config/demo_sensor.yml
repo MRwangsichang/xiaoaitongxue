@@ -1,0 +1,10 @@
+# demo_sensor 模块配置
+
+demo_sensor:
+  enabled: true
+  health_interval: 30  # 健康心跳间隔（秒）
+  
+  # TODO: 添加模块特定配置
+  # 示例:
+  # device_path: /dev/ttyUSB0
+  # timeout: 5

@@ -1,0 +1,144 @@
+{
+  "meta": {
+    "source": "rules_dialog_v3.21.xlsx",
+    "generated_at": "2025-10-11T08:34:55.672457Z",
+    "problems": [
+      "duplicate (story_id,turn,index) rows in Stories"
+    ]
+  },
+  "rules": [
+    {
+      "id": "greet.wangzong",
+      "desc": "人脸识别到王总→欢迎并进入home_smalltalk故事turn=1",
+      "enabled": true,
+      "priority": 100,
+      "source": "event",
+      "any_keywords": ["face_detected"],
+      "all_keywords": ["nan"],
+      "regex": ["nan"],
+      "persona_id": "wangzong",
+      "cooldown_ms": 30000,
+      "time_between": null,
+      "actions": [
+        {
+          "type": "say",
+          "params": {"text": "王总，您回来啦辛苦啦！"}
+        },
+        {
+          "type": "set_state",
+          "params": {"story": "home_smalltalk|turn=1"}
+        }
+      ]
+    },
+    {
+      "id": "exit.hardstop",
+      "desc": "任意回合硬退出：退下/别啰嗦了/滚/别废话/静音/别说话",
+      "enabled": true,
+      "priority": 999,
+      "source": "chat",
+      "any_keywords": ["退下", "别啰嗦了", "滚", "别废话", "静音", "别说话"],
+      "all_keywords": ["nan"],
+      "regex": ["nan"],
+      "persona_id": "nan",
+      "cooldown_ms": 0,
+      "time_between": null,
+      "actions": [
+        {
+          "type": "say",
+          "params": {"text": "收到，退下不打扰您。"}
+        },
+        {
+          "type": "set_state",
+          "params": {"end_dialog": "1"}
+        }
+      ]
+    },
+    {
+      "id": "route.search",
+      "desc": "任意回合联网检索触发",
+      "enabled": true,
+      "priority": 900,
+      "source": "chat",
+      "any_keywords": ["联网", "搜索", "找一下", "找找看", "找找", "想一想", "想一下", "我不懂", "不懂"],
+      "all_keywords": ["nan"],
+      "regex": ["nan"],
+      "persona_id": "nan",
+      "cooldown_ms": 0,
+      "time_between": null,
+      "actions": [
+        {
+          "type": "wake_llm",
+          "params": {"text": "进入搜索模式，先帮王总查一下……", "mode": "search"}
+        }
+      ]
+    },
+    {
+      "id": "quick.ack",
+      "desc": "系统层确认音+短句（可选）",
+      "enabled": true,
+      "priority": 5,
+      "source": "system",
+      "any_keywords": ["intent.received"],
+      "all_keywords": ["nan"],
+      "regex": ["nan"],
+      "persona_id": "nan",
+      "cooldown_ms": 0,
+      "time_between": null,
+      "actions": [
+        {
+          "type": "play",
+          "params": {"args": "/opt/greet/audio/ack.mp3"}
+        },
+        {
+          "type": "say",
+          "params": {"text": "收到。"}
+        }
+      ]
+    }
+  ],
+  "stories": [
+    {
+      "story_id": "home_smalltalk",
+      "turn": 1,
+      "index": 0,
+      "actions": [
+        {"type": "say", "params": {"text": "我在想你啊。"}},
+        {"type": "set_state", "params": {"story": "home_smalltalk|turn=2"}}
+      ]
+    },
+    {
+      "story_id": "home_smalltalk",
+      "turn": 2,
+      "index": 0,
+      "actions": [
+        {"type": "say", "params": {"text": "肯定会想你啦，我的工作之余就是想你。"}},
+        {"type": "set_state", "params": {"story": "home_smalltalk|turn=3"}}
+      ]
+    },
+    {
+      "story_id": "home_smalltalk",
+      "turn": 2,
+      "index": 1,
+      "actions": [
+        {"type": "say", "params": {"text": "好嘞，我这就退下。"}}
+      ]
+    },
+    {
+      "story_id": "home_smalltalk",
+      "turn": 3,
+      "index": 0,
+      "actions": [
+        {"type": "say", "params": {"text": "我在，随时陪您聊。"}}
+      ]
+    },
+    {
+      "story_id": "home_smalltalk",
+      "turn": 3,
+      "index": 1,
+      "actions": [
+        {"type": "say", "params": {"text": "那我先退下不打扰您了。"}}
+      ]
+    }
+  ],
+  "time_triggers": []
+}

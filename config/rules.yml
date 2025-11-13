@@ -1,0 +1,28 @@
+# 规则引擎配置
+
+# MQTT配置
+mqtt:
+  broker: localhost
+  port: 1883
+  keepalive: 60
+
+# 规则文件路径
+rules_file: data/rules.json
+
+# 会话超时（秒）
+session_timeout: 300
+
+# 速率限制
+rates:
+  max_events_per_second: 10
+
+# 日志配置
+logging:
+  level: INFO
+  format: structured
+
+# 系统配置
+system:
+  module_name: rules
+  health_interval: 10
+  project_root: /home/MRwang/smart_assistant

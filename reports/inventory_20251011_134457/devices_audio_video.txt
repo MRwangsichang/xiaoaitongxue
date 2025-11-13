@@ -1,0 +1,33 @@
+=== 摄像头设备 ===
+crw-rw----+ 1 root video 81, 8 Oct 10 18:17 /dev/video0
+
+=== 摄像头占用（lsof /dev/video*）===
+COMMAND   PID   USER   FD   TYPE DEVICE SIZE/OFF NODE NAME
+python3   765 MRwang   15u   CHR   81,8      0t0  604 /dev/video0
+python3   765 MRwang   16u   CHR   81,0      0t0  591 /dev/video13
+python3   765 MRwang   17u   CHR   81,1      0t0  592 /dev/video14
+python3   765 MRwang   18u   CHR   81,2      0t0  593 /dev/video15
+python3   765 MRwang   19u   CHR   81,3      0t0  594 /dev/video16
+pipewire  913 MRwang   55u   CHR   81,8      0t0  604 /dev/video0
+pipewire  913 MRwang   56u   CHR   81,0      0t0  591 /dev/video13
+pipewire  913 MRwang   59u   CHR   81,1      0t0  592 /dev/video14
+pipewire  913 MRwang   60u   CHR   81,2      0t0  593 /dev/video15
+pipewire  913 MRwang   61u   CHR   81,3      0t0  594 /dev/video16
+wireplumb 915 MRwang   39u   CHR   81,8      0t0  604 /dev/video0
+wireplumb 915 MRwang   40u   CHR   81,0      0t0  591 /dev/video13
+wireplumb 915 MRwang   41u   CHR   81,1      0t0  592 /dev/video14
+wireplumb 915 MRwang   42u   CHR   81,2      0t0  593 /dev/video15
+wireplumb 915 MRwang   43u   CHR   81,3      0t0  594 /dev/video16
+无占用
+
+=== 音频采集设备（arecord -l）===
+**** List of CAPTURE Hardware Devices ****
+card 1: Device [USB PnP Sound Device], device 0: USB Audio [USB Audio]
+  Subdevices: 1/1
+  Subdevice #0: subdevice #0
+
+=== 音频输出设备（aplay -l）===
+**** List of PLAYBACK Hardware Devices ****
+card 0: sndrpihifiberry [snd_rpi_hifiberry_dac], device 0: HifiBerry DAC HiFi pcm5102a-hifi-0 [HifiBerry DAC HiFi pcm5102a-hifi-0]
+  Subdevices: 1/1
+  Subdevice #0: subdevice #0

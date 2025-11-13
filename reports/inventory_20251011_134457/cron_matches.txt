@@ -1,0 +1,14 @@
+=== 当前用户 crontab（关键词筛选）===
+无匹配或无 crontab
+
+=== /etc/cron.*（关键词筛选）===
+/etc/cron.daily/apt-compat:9:# cron.daily time
+/etc/cron.daily/apt-compat:17:    #       0 (true)    System is on main power
+/etc/cron.daily/apt-compat:18:    #       1 (false)   System is not on main power
+/etc/cron.daily/apt-compat:54:# run daily job
+/etc/cron.daily/apt-compat:55:exec /usr/lib/apt/apt.systemd.daily
+/etc/cron.daily/man-db:3:# man-db cron daily
+/etc/cron.hourly/fake-hwclock:4:# a power failure or other crash
+
+=== /etc/crontab（关键词筛选）===
+19:25 6	* * *	root	test -x /usr/sbin/anacron || { cd / && run-parts --report /etc/cron.daily; }

@@ -1,0 +1,42 @@
+asr_control:
+  pause_before_play: true
+  pause_delay_ms: 100
+  resume_after_play: true
+audio:
+  cache_dir: /tmp/tts_cache
+  device: plughw:0,0
+  player: mpg123
+auth:
+  env_keys:
+  - XF_TTS_APPID
+  - XF_TTS_API_KEY
+  - XF_TTS_API_SECRET
+edge:
+  rate: +0%
+  voice: zh-CN-YunxiNeural
+  volume: +100%
+health_interval: 10
+logging:
+  dir: logs
+  level: INFO
+  rotate_days: 7
+mqtt:
+  broker: localhost
+  keepalive: 60
+  port: 1883
+  qos: 1
+provider: xunfei
+queue:
+  max_size: 10
+  timeout_sec: 30
+system:
+  project_root: /home/MRwang/smart_assistant
+  service_prefix: sa
+xunfei:
+  aue: lame
+  pitch: 50
+  speed: 50
+  timeout: 10
+  vcn: x5_lingfeiyi_flow
+  volume: 50
+  ws_url: wss://cbm01.cn-huabei-1.xf-yun.com/v1/private/mcd9m97e6

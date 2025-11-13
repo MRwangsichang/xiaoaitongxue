@@ -1,0 +1,42 @@
+# Greeting Service Configuration
+
+# ==================== MQTT (required) ====================
+mqtt:
+  broker: localhost
+  port: 1883
+  qos: 1
+  keepalive: 60
+
+# ==================== Logging (required) ====================
+logging:
+  level: INFO
+  dir: logs
+  rotate_days: 7
+
+# ==================== System (required) ====================
+system:
+  project_root: /home/MRwang/smart_assistant
+  service_prefix: sa
+
+# ==================== Greeting-specific config ====================
+# 订阅的视觉事件主题
+subscribe_topic: "sa/vision/person_detected"
+
+# 发布的TTS主题
+tts_topic: "sa/tts/say"
+
+# GROK场景配置文件路径
+grok_scenarios_file: "config/grok_scenarios.yaml"
+
+# 问候冷却时间（秒）- 避免短时间内重复问候
+cooldown_seconds: 300
+
+# 健康心跳间隔（秒）
+health_interval: 10
+
+# 时间段定义（小时）
+time_periods:
+  morning: [5, 11]      # 5:00-11:59
+  afternoon: [12, 17]   # 12:00-17:59
+  evening: [18, 23]     # 18:00-23:59
+  night: [0, 4]         # 0:00-4:59

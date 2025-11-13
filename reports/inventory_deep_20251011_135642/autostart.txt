@@ -1,0 +1,193 @@
+== 用户级自启 ~/.config/autostart/*.desktop ==
+无匹配
+
+== 系统级自启 /etc/xdg/autostart/ ==
+/etc/xdg/autostart/autotouch.desktop:7:NoDisplay=true
+/etc/xdg/autostart/xwayauth.desktop:7:NoDisplay=true
+/etc/xdg/autostart/pulseaudio.desktop:71:Comment[id]=Memulai Sistem Suara PulseAudio
+/etc/xdg/autostart/pwrkey.desktop:7:NoDisplay=true
+/etc/xdg/autostart/xdg-user-dirs.desktop:4:TryExec=xdg-user-dirs-update
+/etc/xdg/autostart/xdg-user-dirs.desktop:5:Exec=xdg-user-dirs-update
+/etc/xdg/autostart/xdg-user-dirs.desktop:7:NoDisplay=true
+/etc/xdg/autostart/polkit-mate-authentication-agent-1.desktop:96:Comment[is]=PolicyKit auðkenningarþjónn fyrir MATE-skjáborðið
+/etc/xdg/autostart/polkit-mate-authentication-agent-1.desktop:127:NoDisplay=true
+/etc/xdg/autostart/gnome-keyring-pkcs11.desktop:23:Name[eu]=Ziurtagirien/gakoen biltegia
+/etc/xdg/autostart/gnome-keyring-pkcs11.desktop:25:Name[fi]=Varmenne- ja avainsäilö
+/etc/xdg/autostart/gnome-keyring-pkcs11.desktop:43:Name[lt]=Liudijimų ir raktų saugykla
+/etc/xdg/autostart/gnome-keyring-pkcs11.desktop:96:Comment[eu]=GNOMEren gako-sorta: PKCS#11 osagaia
+/etc/xdg/autostart/gnome-keyring-pkcs11.desktop:98:Comment[fi]=Gnomen avainnippu: PKCS#11-komponentti
+/etc/xdg/autostart/gnome-keyring-pkcs11.desktop:101:Comment[gd]=Dul-iuchrach GNOME: Co-phàirt PKCS#11
+/etc/xdg/autostart/gnome-keyring-pkcs11.desktop:116:Comment[lv]=GNOME atslēgu saišķis — PKCS#11 komponente
+/etc/xdg/autostart/gnome-keyring-pkcs11.desktop:130:Comment[pt_BR]=Chaveiro do GNOME: Componente PKCS#11
+/etc/xdg/autostart/gnome-keyring-pkcs11.desktop:134:Comment[sl]=Zbirka ključev GNOME: enota PKCS#11
+/etc/xdg/autostart/gnome-keyring-pkcs11.desktop:151:NoDisplay=true
+/etc/xdg/autostart/gnome-keyring-pkcs11.desktop:152:X-GNOME-Autostart-Phase=PreDisplayServer
+/etc/xdg/autostart/xcompmgr.desktop:5:NoDisplay=true
+/etc/xdg/autostart/xdg-user-dirs-kde.desktop:4:TryExec=xdg-user-dirs-update
+/etc/xdg/autostart/xdg-user-dirs-kde.desktop:5:Exec=xdg-user-dirs-update
+/etc/xdg/autostart/xdg-user-dirs-kde.desktop:7:NoDisplay=true
+/etc/xdg/autostart/env-display.desktop:3:Name=env_display
+/etc/xdg/autostart/env-display.desktop:4:Comment=Set display variable for systemd user services
+/etc/xdg/autostart/env-display.desktop:5:NoDisplay=false
+/etc/xdg/autostart/env-display.desktop:6:Exec=/usr/bin/dbus-update-activation-environment --systemd DISPLAY WAYLAND_DISPLAY
+/etc/xdg/autostart/pprompt.desktop:5:NoDisplay=true
+/etc/xdg/autostart/squeekboard.desktop:7:NoDisplay=true
+/etc/xdg/autostart/gnome-keyring-ssh.desktop:24:Name[fi]=SSH-avainten agentti
+/etc/xdg/autostart/gnome-keyring-ssh.desktop:27:Name[gd]=Àidseant iuchair SSH
+/etc/xdg/autostart/gnome-keyring-ssh.desktop:96:Comment[fi]=Gnomen avainnippu: SSH-agentti
+/etc/xdg/autostart/gnome-keyring-ssh.desktop:114:Comment[lv]=GNOME atslēgu saišķis — SSH aģents
+/etc/xdg/autostart/gnome-keyring-ssh.desktop:129:Comment[pt_BR]=Chaveiro do GNOME: Agente SSH
+/etc/xdg/autostart/gnome-keyring-ssh.desktop:133:Comment[sl]=Zbirka ključev GNOME: agent SSH
+/etc/xdg/autostart/gnome-keyring-ssh.desktop:150:X-GNOME-Autostart-Phase=PreDisplayServer
+/etc/xdg/autostart/gnome-keyring-secrets.desktop:24:Name[fi]=Salaisuuksien säilöntäpalvelu
+/etc/xdg/autostart/gnome-keyring-secrets.desktop:27:Name[gd]=Seirbheis stòrais dhìomhair
+/etc/xdg/autostart/gnome-keyring-secrets.desktop:96:Comment[fi]=Gnomen avainnippu: Salainen palvelu
+/etc/xdg/autostart/gnome-keyring-secrets.desktop:99:Comment[gd]=Dul-iuchrach GNOME: Seirbheis dhìomhair
+/etc/xdg/autostart/gnome-keyring-secrets.desktop:114:Comment[lv]=GNOME atslēgu saišķis — slepenais serviss
+/etc/xdg/autostart/gnome-keyring-secrets.desktop:129:Comment[pt_BR]=Chaveiro do GNOME: Serviço secreto
+/etc/xdg/autostart/gnome-keyring-secrets.desktop:133:Comment[sl]=Zbirka ključev GNOME: skrite storitve
+/etc/xdg/autostart/gnome-keyring-secrets.desktop:150:NoDisplay=true
+/etc/xdg/autostart/gnome-keyring-secrets.desktop:151:X-GNOME-Autostart-Phase=PreDisplayServer
+
+== rc.local ==
+无 rc.local
+
+== rc*.d 目录下的启动脚本 ==
+/etc/rc0.d:
+total 0
+lrwxrwxrwx 1 root root 20 May 13 08:06 K01alsa-utils -> ../init.d/alsa-utils
+lrwxrwxrwx 1 root root 19 May 13 08:07 K01bluetooth -> ../init.d/bluetooth
+lrwxrwxrwx 1 root root 22 May 13 08:10 K01cups-browsed -> ../init.d/cups-browsed
+lrwxrwxrwx 1 root root 22 May 13 08:07 K01fake-hwclock -> ../init.d/fake-hwclock
+lrwxrwxrwx 1 root root 13 May 13 08:10 K01fio -> ../init.d/fio
+lrwxrwxrwx 1 root root 20 May 13 08:04 K01hwclock.sh -> ../init.d/hwclock.sh
+lrwxrwxrwx 1 root root 17 May 13 08:08 K01lightdm -> ../init.d/lightdm
+lrwxrwxrwx 1 root root 20 May 13 08:07 K01nfs-common -> ../init.d/nfs-common
+lrwxrwxrwx 1 root root 18 May 13 08:09 K01plymouth -> ../init.d/plymouth
+lrwxrwxrwx 1 root root 37 May 13 08:10 K01pulseaudio-enable-autospawn -> ../init.d/pulseaudio-enable-autospawn
+lrwxrwxrwx 1 root root 17 May 13 08:07 K01rpcbind -> ../init.d/rpcbind
+lrwxrwxrwx 1 root root 15 May 13 08:10 K01saned -> ../init.d/saned
+lrwxrwxrwx 1 root root 22 May 13 08:06 K01triggerhappy -> ../init.d/triggerhappy
+lrwxrwxrwx 1 root root 14 May 13 08:05 K01udev -> ../init.d/udev
+
+/etc/rc1.d:
+total 0
+lrwxrwxrwx 1 root root 20 May 13 08:06 K01alsa-utils -> ../init.d/alsa-utils
+lrwxrwxrwx 1 root root 19 May 13 08:07 K01bluetooth -> ../init.d/bluetooth
+lrwxrwxrwx 1 root root 14 May 13 08:10 K01cups -> ../init.d/cups
+lrwxrwxrwx 1 root root 22 May 13 08:10 K01cups-browsed -> ../init.d/cups-browsed
+lrwxrwxrwx 1 root root 22 May 13 08:07 K01fake-hwclock -> ../init.d/fake-hwclock
+lrwxrwxrwx 1 root root 13 May 13 08:10 K01fio -> ../init.d/fio
+lrwxrwxrwx 1 root root 17 May 13 08:08 K01lightdm -> ../init.d/lightdm
+lrwxrwxrwx 1 root root 20 May 13 08:07 K01nfs-common -> ../init.d/nfs-common
+lrwxrwxrwx 1 root root 37 May 13 08:10 K01pulseaudio-enable-autospawn -> ../init.d/pulseaudio-enable-autospawn
+lrwxrwxrwx 1 root root 15 May 13 08:10 K01saned -> ../init.d/saned
+lrwxrwxrwx 1 root root 22 May 13 08:06 K01triggerhappy -> ../init.d/triggerhappy
+
+/etc/rc2.d:
+total 0
+lrwxrwxrwx 1 root root 13 May 13 08:10 K01fio -> ../init.d/fio
+lrwxrwxrwx 1 root root 19 May 13 08:07 S01bluetooth -> ../init.d/bluetooth
+lrwxrwxrwx 1 root root 26 May 13 08:07 S01console-setup.sh -> ../init.d/console-setup.sh
+lrwxrwxrwx 1 root root 14 May 13 08:05 S01cron -> ../init.d/cron
+lrwxrwxrwx 1 root root 14 May 13 08:10 S01cups -> ../init.d/cups
+lrwxrwxrwx 1 root root 22 May 13 08:10 S01cups-browsed -> ../init.d/cups-browsed
+lrwxrwxrwx 1 root root 14 May 13 08:07 S01dbus -> ../init.d/dbus
+lrwxrwxrwx 1 root root 24 May 13 08:07 S01dphys-swapfile -> ../init.d/dphys-swapfile
+lrwxrwxrwx 1 root root 17 May 13 08:08 S01lightdm -> ../init.d/lightdm
+lrwxrwxrwx 1 root root 18 May 13 08:09 S01plymouth -> ../init.d/plymouth
+lrwxrwxrwx 1 root root 37 May 13 08:10 S01pulseaudio-enable-autospawn -> ../init.d/pulseaudio-enable-autospawn
+lrwxrwxrwx 1 root root 15 May 13 08:05 S01rsync -> ../init.d/rsync
+lrwxrwxrwx 1 root root 15 May 13 08:10 S01saned -> ../init.d/saned
+lrwxrwxrwx 1 root root 13 May 13 08:07 S01ssh -> ../init.d/ssh
+lrwxrwxrwx 1 root root 14 May 13 08:06 S01sudo -> ../init.d/sudo
+lrwxrwxrwx 1 root root 22 May 13 08:06 S01triggerhappy -> ../init.d/triggerhappy
+
+/etc/rc3.d:
+total 0
+lrwxrwxrwx 1 root root 13 May 13 08:10 K01fio -> ../init.d/fio
+lrwxrwxrwx 1 root root 19 May 13 08:07 S01bluetooth -> ../init.d/bluetooth
+lrwxrwxrwx 1 root root 26 May 13 08:07 S01console-setup.sh -> ../init.d/console-setup.sh
+lrwxrwxrwx 1 root root 14 May 13 08:05 S01cron -> ../init.d/cron
+lrwxrwxrwx 1 root root 14 May 13 08:10 S01cups -> ../init.d/cups
+lrwxrwxrwx 1 root root 22 May 13 08:10 S01cups-browsed -> ../init.d/cups-browsed
+lrwxrwxrwx 1 root root 14 May 13 08:07 S01dbus -> ../init.d/dbus
+lrwxrwxrwx 1 root root 24 May 13 08:07 S01dphys-swapfile -> ../init.d/dphys-swapfile
+lrwxrwxrwx 1 root root 17 May 13 08:08 S01lightdm -> ../init.d/lightdm
+lrwxrwxrwx 1 root root 18 May 13 08:09 S01plymouth -> ../init.d/plymouth
+lrwxrwxrwx 1 root root 37 May 13 08:10 S01pulseaudio-enable-autospawn -> ../init.d/pulseaudio-enable-autospawn
+lrwxrwxrwx 1 root root 15 May 13 08:05 S01rsync -> ../init.d/rsync
+lrwxrwxrwx 1 root root 15 May 13 08:10 S01saned -> ../init.d/saned
+lrwxrwxrwx 1 root root 13 May 13 08:07 S01ssh -> ../init.d/ssh
+lrwxrwxrwx 1 root root 14 May 13 08:06 S01sudo -> ../init.d/sudo
+lrwxrwxrwx 1 root root 22 May 13 08:06 S01triggerhappy -> ../init.d/triggerhappy
+
+/etc/rc4.d:
+total 0
+lrwxrwxrwx 1 root root 13 May 13 08:10 K01fio -> ../init.d/fio
+lrwxrwxrwx 1 root root 19 May 13 08:07 S01bluetooth -> ../init.d/bluetooth
+lrwxrwxrwx 1 root root 26 May 13 08:07 S01console-setup.sh -> ../init.d/console-setup.sh
+lrwxrwxrwx 1 root root 14 May 13 08:05 S01cron -> ../init.d/cron
+lrwxrwxrwx 1 root root 14 May 13 08:10 S01cups -> ../init.d/cups
+lrwxrwxrwx 1 root root 22 May 13 08:10 S01cups-browsed -> ../init.d/cups-browsed
+lrwxrwxrwx 1 root root 14 May 13 08:07 S01dbus -> ../init.d/dbus
+lrwxrwxrwx 1 root root 24 May 13 08:07 S01dphys-swapfile -> ../init.d/dphys-swapfile
+lrwxrwxrwx 1 root root 17 May 13 08:08 S01lightdm -> ../init.d/lightdm
+lrwxrwxrwx 1 root root 18 May 13 08:09 S01plymouth -> ../init.d/plymouth
+lrwxrwxrwx 1 root root 37 May 13 08:10 S01pulseaudio-enable-autospawn -> ../init.d/pulseaudio-enable-autospawn
+lrwxrwxrwx 1 root root 15 May 13 08:05 S01rsync -> ../init.d/rsync
+lrwxrwxrwx 1 root root 15 May 13 08:10 S01saned -> ../init.d/saned
+lrwxrwxrwx 1 root root 13 May 13 08:07 S01ssh -> ../init.d/ssh
+lrwxrwxrwx 1 root root 14 May 13 08:06 S01sudo -> ../init.d/sudo
+lrwxrwxrwx 1 root root 22 May 13 08:06 S01triggerhappy -> ../init.d/triggerhappy
+
+/etc/rc5.d:
+total 0
+lrwxrwxrwx 1 root root 13 May 13 08:10 K01fio -> ../init.d/fio
+lrwxrwxrwx 1 root root 19 May 13 08:07 S01bluetooth -> ../init.d/bluetooth
+lrwxrwxrwx 1 root root 26 May 13 08:07 S01console-setup.sh -> ../init.d/console-setup.sh
+lrwxrwxrwx 1 root root 14 May 13 08:05 S01cron -> ../init.d/cron
+lrwxrwxrwx 1 root root 14 May 13 08:10 S01cups -> ../init.d/cups
+lrwxrwxrwx 1 root root 22 May 13 08:10 S01cups-browsed -> ../init.d/cups-browsed
+lrwxrwxrwx 1 root root 14 May 13 08:07 S01dbus -> ../init.d/dbus
+lrwxrwxrwx 1 root root 24 May 13 08:07 S01dphys-swapfile -> ../init.d/dphys-swapfile
+lrwxrwxrwx 1 root root 17 May 13 08:08 S01lightdm -> ../init.d/lightdm
+lrwxrwxrwx 1 root root 18 May 13 08:09 S01plymouth -> ../init.d/plymouth
+lrwxrwxrwx 1 root root 37 May 13 08:10 S01pulseaudio-enable-autospawn -> ../init.d/pulseaudio-enable-autospawn
+lrwxrwxrwx 1 root root 15 May 13 08:05 S01rsync -> ../init.d/rsync
+lrwxrwxrwx 1 root root 15 May 13 08:10 S01saned -> ../init.d/saned
+lrwxrwxrwx 1 root root 13 May 13 08:07 S01ssh -> ../init.d/ssh
+lrwxrwxrwx 1 root root 14 May 13 08:06 S01sudo -> ../init.d/sudo
+lrwxrwxrwx 1 root root 22 May 13 08:06 S01triggerhappy -> ../init.d/triggerhappy
+
+/etc/rc6.d:
+total 0
+lrwxrwxrwx 1 root root 20 May 13 08:06 K01alsa-utils -> ../init.d/alsa-utils
+lrwxrwxrwx 1 root root 19 May 13 08:07 K01bluetooth -> ../init.d/bluetooth
+lrwxrwxrwx 1 root root 22 May 13 08:10 K01cups-browsed -> ../init.d/cups-browsed
+lrwxrwxrwx 1 root root 22 May 13 08:07 K01fake-hwclock -> ../init.d/fake-hwclock
+lrwxrwxrwx 1 root root 13 May 13 08:10 K01fio -> ../init.d/fio
+lrwxrwxrwx 1 root root 20 May 13 08:04 K01hwclock.sh -> ../init.d/hwclock.sh
+lrwxrwxrwx 1 root root 17 May 13 08:08 K01lightdm -> ../init.d/lightdm
+lrwxrwxrwx 1 root root 20 May 13 08:07 K01nfs-common -> ../init.d/nfs-common
+lrwxrwxrwx 1 root root 18 May 13 08:09 K01plymouth -> ../init.d/plymouth
+lrwxrwxrwx 1 root root 37 May 13 08:10 K01pulseaudio-enable-autospawn -> ../init.d/pulseaudio-enable-autospawn
+lrwxrwxrwx 1 root root 17 May 13 08:07 K01rpcbind -> ../init.d/rpcbind
+lrwxrwxrwx 1 root root 15 May 13 08:10 K01saned -> ../init.d/saned
+lrwxrwxrwx 1 root root 22 May 13 08:06 K01triggerhappy -> ../init.d/triggerhappy
+lrwxrwxrwx 1 root root 14 May 13 08:05 K01udev -> ../init.d/udev
+
+/etc/rcS.d:
+total 0
+lrwxrwxrwx 1 root root 20 May 13 08:04 K01hwclock.sh -> ../init.d/hwclock.sh
+lrwxrwxrwx 1 root root 20 May 13 08:07 K01nfs-common -> ../init.d/nfs-common
+lrwxrwxrwx 1 root root 17 May 13 08:07 K01rpcbind -> ../init.d/rpcbind
+lrwxrwxrwx 1 root root 20 May 13 08:06 S01alsa-utils -> ../init.d/alsa-utils
+lrwxrwxrwx 1 root root 18 May 13 08:05 S01apparmor -> ../init.d/apparmor
+lrwxrwxrwx 1 root root 22 May 13 08:07 S01fake-hwclock -> ../init.d/fake-hwclock
+lrwxrwxrwx 1 root root 27 May 13 08:07 S01keyboard-setup.sh -> ../init.d/keyboard-setup.sh
+lrwxrwxrwx 1 root root 14 May 13 08:05 S01kmod -> ../init.d/kmod
+lrwxrwxrwx 1 root root 22 May 13 08:09 S01plymouth-log -> ../init.d/plymouth-log
+lrwxrwxrwx 1 root root 16 May 13 08:05 S01procps -> ../init.d/procps
+lrwxrwxrwx 1 root root 14 May 13 08:05 S01udev -> ../init.d/udev
+lrwxrwxrwx 1 root root 20 May 13 08:08 S01x11-common -> ../init.d/x11-common

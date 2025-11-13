@@ -1,0 +1,8 @@
+{
+  "app_name": "smart_assistant",
+  "env": "dev",
+  "log_level": "INFO",
+  "event_queue_size": 1000,
+  "storage_dir": "/home/MRwang/smart_assistant/data",
+  "logs_dir": "/home/MRwang/smart_assistant/logs"
+}

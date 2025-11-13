@@ -1,0 +1,14 @@
+=== 所有监听端口（TCP/UDP）===
+Netid State  Recv-Q Send-Q Local Address:Port  Peer Address:PortProcess                                                     
+udp   UNCONN 0      0            0.0.0.0:56506      0.0.0.0:*                                                               
+udp   UNCONN 0      0            0.0.0.0:5353       0.0.0.0:*                                                               
+udp   UNCONN 0      0                  *:57291            *:*                                                               
+udp   UNCONN 0      0                  *:5353             *:*                                                               
+tcp   LISTEN 0      128        127.0.0.1:631        0.0.0.0:*                                                               
+tcp   LISTEN 0      128          0.0.0.0:22         0.0.0.0:*                                                               
+tcp   LISTEN 0      2048         0.0.0.0:5000       0.0.0.0:*    users:(("gunicorn",pid=778,fd=5),("gunicorn",pid=763,fd=5))
+tcp   LISTEN 0      128            [::1]:631           [::]:*                                                               
+tcp   LISTEN 0      128             [::]:22            [::]:*                                                               
+
+=== 可疑老端口检查：5050 ===
+端口 5050 未被监听

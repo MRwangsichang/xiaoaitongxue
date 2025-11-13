@@ -1,0 +1,379 @@
+#!/usr/bin/env python3
+"""
+讯飞实时语音识别模块
+"""
+
+import asyncio
+import json
+import base64
+import hashlib
+import hmac
+import time
+import ssl
+import logging
+from datetime import datetime
+from urllib.parse import urlencode, quote
+import websockets
+from websockets.client import WebSocketClientProtocol
+import pyaudio
+import numpy as np
+from typing import Optional, Dict, Any
+import os
+import sys
+
+# 添加项目根目录
+sys.path.insert(0, '/home/MRwang/smart_assistant')
+
+from asyncio_mqtt import Client as MQTTClient
+
+class XunfeiASR:
+    """讯飞实时语音识别"""
+    
+    def __init__(self):
+        self.logger = logging.getLogger("xunfei_asr")
+        
+        # 加载配置
+        self.config = self._load_config()
+        
+        # 音频参数
+        self.sample_rate = 16000
+        self.channels = 1
+        self.chunk_size = 1280  # 80ms的数据
+        
+        # 状态
+        self.ws = None
+        self.audio_stream = None
+        self.pyaudio_instance = None
+        self.is_recording = False
+        self.mqtt_client = None
+        
+        # VAD参数
+        self.vad_energy_threshold = 500  # 能量阈值
+        self.vad_silence_duration = 1.5  # 静音时长
+        self.last_speech_time = 0
+        self.is_speaking = False
+        
+        # 识别结果
+        self.current_text = ""
+        
+    def _load_config(self) -> Dict:
+        """加载配置文件"""
+        config_file = "/home/MRwang/smart_assistant/config/xunfei_asr.json"
+        
+        if os.path.exists(config_file):
+            try:
+                with open(config_file, 'r') as f:
+                    return json.load(f)
+            except Exception as e:
+                self.logger.error(f"加载配置失败: {e}")
+                
+        # 默认配置
+        return {
+            "app_id": "",
+            "api_key": "",
+            "api_secret": "",
+            "mqtt_host": "localhost",
+            "mqtt_port": 1883
+        }
+        
+    def _create_url(self) -> str:
+        """生成WebSocket连接URL（含鉴权）"""
+        url = 'wss://ws-api.xfyun.cn/v2/iat'
+        
+        # 生成RFC1123格式的时间戳
+        now = datetime.now()
+        date = now.strftime('%a, %d %b %Y %H:%M:%S GMT')
+        
+        # 拼接字符串
+        signature_origin = f"host: ws-api.xfyun.cn\n"
+        signature_origin += f"date: {date}\n"
+        signature_origin += f"GET /v2/iat HTTP/1.1"
+        
+        # 进行hmac-sha256加密
+        signature_sha = hmac.new(
+            self.config['api_secret'].encode('utf-8'),
+            signature_origin.encode('utf-8'),
+            digestmod=hashlib.sha256
+        ).digest()
+        
+        signature_sha_base64 = base64.b64encode(signature_sha).decode('utf-8')
+        
+        authorization_origin = f'api_key="{self.config["api_key"]}", ' \
+                              f'algorithm="hmac-sha256", ' \
+                              f'headers="host date request-line", ' \
+                              f'signature="{signature_sha_base64}"'
+        
+        authorization = base64.b64encode(authorization_origin.encode('utf-8')).decode('utf-8')
+        
+        # 将请求的鉴权参数组合为字典
+        v = {
+            "authorization": authorization,
+            "date": date,
+            "host": "ws-api.xfyun.cn"
+        }
+        
+        # 拼接鉴权参数，生成url
+        url = url + '?' + urlencode(v)
+        return url
+        
+    async def connect_mqtt(self):
+        """连接MQTT"""
+        try:
+            self.mqtt_client = MQTTClient(
+                self.config.get('mqtt_host', 'localhost'),
+                port=self.config.get('mqtt_port', 1883)
+            )
+            await self.mqtt_client.connect()
+            self.logger.info("连接到MQTT broker")
+            
+        except Exception as e:
+            self.logger.error(f"MQTT连接失败: {e}")
+            
+    async def publish_asr_result(self, text: str, is_final: bool = True):
+        """发布ASR识别结果"""
+        if not self.mqtt_client:
+            self.logger.warning("MQTT未连接")
+            return
+            
+        message = {
+            "id": f"asr-{int(time.time()*1000)}",
+            "ts": datetime.now().strftime("%Y-%m-%dT%H:%M:%S.%fZ"),
+            "source": "asr",
+            "type": "text",
+            "corr": f"asr-{int(time.time()*1000)}",
+            "payload": {
+                "text": text,
+                "timestamp": time.time(),
+                "final": is_final
+            },
+            "meta": {"ver": "1.0"}
+        }
+        
+        topic = "sa/asr/text" if is_final else "sa/asr/partial"
+        
+        try:
+            await self.mqtt_client.publish(topic, json.dumps(message))
+            self.logger.info(f"发布ASR结果到 {topic}: {text}")
+        except Exception as e:
+            self.logger.error(f"发布失败: {e}")
+            
+    async def start_recognition(self):
+        """开始语音识别"""
+        if self.is_recording:
+            self.logger.warning("已在录音中")
+            return
+            
+        try:
+            # 检查配置
+            if not self.config.get('app_id') or not self.config.get('api_key'):
+                self.logger.error("请先配置讯飞API信息")
+                return
+                
+            # 连接WebSocket
+            ws_url = self._create_url()
+            self.ws = await websockets.connect(ws_url)
+            self.is_recording = True
+            self.logger.info("连接到讯飞WebSocket")
+            
+            # 初始化PyAudio
+            if not self.pyaudio_instance:
+                self.pyaudio_instance = pyaudio.PyAudio()
+                
+            # 打开音频流
+            self.audio_stream = self.pyaudio_instance.open(
+                format=pyaudio.paInt16,
+                channels=self.channels,
+                rate=self.sample_rate,
+                input=True,
+                frames_per_buffer=self.chunk_size
+            )
+            
+            self.logger.info("开始录音...")
+            
+            # 并行执行发送和接收
+            await asyncio.gather(
+                self._send_audio(),
+                self._receive_result(),
+                return_exceptions=True
+            )
+            
+        except Exception as e:
+            self.logger.error(f"识别出错: {e}")
+            await self.stop_recognition()
+            
+    async def _send_audio(self):
+        """发送音频数据到讯飞"""
+        try:
+            status = 0  # 音频状态：0-第一帧，1-中间帧，2-最后一帧
+            frame_count = 0
+            silence_count = 0
+            
+            while self.is_recording and self.ws and not self.ws.state.value > 1:
+                # 读取音频
+                audio_chunk = self.audio_stream.read(self.chunk_size, exception_on_overflow=False)
+                
+                # 计算音量（简单VAD）
+                audio_array = np.frombuffer(audio_chunk, dtype=np.int16)
+                energy = np.abs(audio_array).mean()
+                
+                if energy > self.vad_energy_threshold:
+                    # 检测到声音
+                    self.last_speech_time = time.time()
+                    self.is_speaking = True
+                    silence_count = 0
+                    self.logger.debug(f"检测到语音，能量: {energy}")
+                else:
+                    # 静音
+                    if self.is_speaking:
+                        silence_count += 1
+                        # 80ms一帧，需要约19帧才是1.5秒
+                        if silence_count > int(self.vad_silence_duration / 0.08):
+                            self.logger.info("检测到静音结束")
+                            status = 2  # 标记为最后一帧
+                            
+                # 构建数据帧
+                if status == 0:
+                    # 第一帧，包含业务参数
+                    data = {
+                        "common": {
+                            "app_id": self.config['app_id']
+                        },
+                        "business": {
+                            "language": "zh_cn",
+                            "domain": "iat",
+                            "accent": "mandarin",
+                            "vad_eos": 2000,
+                            "dwa": "wpgs"
+                        },
+                        "data": {
+                            "status": status,
+                            "format": "audio/L16;rate=16000",
+                            "encoding": "raw",
+                            "audio": base64.b64encode(audio_chunk).decode()
+                        }
+                    }
+                    status = 1  # 后续改为中间帧
+                else:
+                    # 中间帧或最后一帧
+                    data = {
+                        "data": {
+                            "status": status,
+                            "format": "audio/L16;rate=16000",
+                            "encoding": "raw",
+                            "audio": base64.b64encode(audio_chunk).decode() if status == 1 else ""
+                        }
+                    }
+                    
+                # 发送数据
+                await self.ws.send(json.dumps(data))
+                frame_count += 1
+                
+                if status == 2:
+                    # 已发送最后一帧
+                    self.logger.info(f"发送结束帧，共 {frame_count} 帧")
+                    break
+                    
+                # 控制发送频率
+                await asyncio.sleep(0.04)  # 40ms
+                
+        except Exception as e:
+            self.logger.error(f"发送音频出错: {e}")
+            
+    async def _receive_result(self):
+        """接收识别结果"""
+        try:
+            while self.is_recording and self.ws and not self.ws.state.value > 1:
+                message = await self.ws.recv()
+                data = json.loads(message)
+                
+                code = data.get('code', 0)
+                if code != 0:
+                    self.logger.error(f"识别错误: {data.get('message', 'Unknown error')}")
+                    break
+                    
+                # 解析结果
+                result = data.get('data', {}).get('result', {})
+                status = data.get('data', {}).get('status', 0)
+                
+                # 提取文本
+                ws_list = result.get('ws', [])
+                for ws_item in ws_list:
+                    for cw in ws_item.get('cw', []):
+                        word = cw.get('w', '')
+                        sentence_text += word
+                        
+                # 发布部分结果
+                if self.current_text:
+                    await self.publish_asr_result(self.current_text, is_final=False)
+                    
+                # 判断是否结束
+                if status == 2:
+                    # 识别结束
+                    if self.current_text:
+                        self.logger.info(f"最终识别结果: {self.current_text}")
+                        await self.publish_asr_result(self.current_text, is_final=True)
+                    self.current_text = ""
+                    break
+                    
+        except Exception as e:
+            if self.is_recording:
+                self.logger.error(f"接收结果出错: {e}")
+                
+    async def stop_recognition(self):
+        """停止识别"""
+        self.is_recording = False
+        
+        if self.audio_stream:
+            self.audio_stream.stop_stream()
+            self.audio_stream.close()
+            self.audio_stream = None
+            
+        if self.ws:
+            await self.ws.close()
+            self.ws = None
+            
+        self.current_text = ""
+        self.logger.info("停止识别")
+        
+    async def run_forever(self):
+        """持续运行（监听唤醒词后启动）"""
+        await self.connect_mqtt()
+        
+        # 订阅唤醒事件
+        async with self.mqtt_client.filtered_messages("sa/sys/wake") as messages:
+            await self.mqtt_client.subscribe("sa/sys/wake")
+            self.logger.info("等待唤醒词...")
+            
+            async for message in messages:
+                self.logger.info("收到唤醒信号，开始识别...")
+                await self.start_recognition()
+                self.logger.info("识别结束，等待下次唤醒...")
+
+async def main():
+    """主函数"""
+    logging.basicConfig(
+        level=logging.INFO,
+        format='%(asctime)s | %(levelname)-7s | %(name)-15s | %(message)s',
+        datefmt='%Y-%m-%d %H:%M:%S'
+    )
+    
+    asr = XunfeiASR()
+    
+    # 简单测试模式：录音5秒
+    print("=== 讯飞ASR测试 ===")
+    print("1. 请确保已配置讯飞API信息")
+    print("2. 开始后请对麦克风说话")
+    print("3. 静音1.5秒后自动结束")
+    print("==================")
+    
+    await asr.connect_mqtt()
+    await asr.start_recognition()
+    
+    # 清理
+    if asr.pyaudio_instance:
+        asr.pyaudio_instance.terminate()
+    if asr.mqtt_client:
+        await asr.mqtt_client.disconnect()
+
+if __name__ == "__main__":
+    asyncio.run(main())

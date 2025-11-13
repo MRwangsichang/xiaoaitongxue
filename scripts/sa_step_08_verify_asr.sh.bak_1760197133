@@ -1,0 +1,83 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+say() { printf "[%s] %s\n" "$(date +%H:%M:%S)" "$*"; }
+
+ROOT="/home/MRwang/smart_assistant"
+cd "$ROOT" || exit 1
+
+say "=== ASR Module Verification ==="
+
+# 1) Check directory structure
+say "Step 1: Checking directory structure..."
+if [ -d "modules/asr" ]; then
+    say "✓ modules/asr/ exists"
+    tree modules/asr -L 1 2>/dev/null || ls -lh modules/asr/
+else
+    say "✗ modules/asr/ NOT FOUND"
+    exit 1
+fi
+
+# 2) Check files exist
+say ""
+say "Step 2: Checking files..."
+FILES=(
+    "modules/asr/__init__.py"
+    "modules/asr/asr_module.py"
+    "modules/asr/mock_provider.py"
+    "modules/asr/cloud_provider.py"
+    "config/asr.yml"
+    "tests/test_asr_module.py"
+)
+
+for file in "${FILES[@]}"; do
+    if [ -f "$file" ]; then
+        SIZE=$(wc -c < "$file")
+        say "✓ $file ($SIZE bytes)"
+    else
+        say "✗ $file MISSING"
+        exit 1
+    fi
+done
+
+# 3) Python import check
+say ""
+say "Step 3: Testing Python imports..."
+python3 <<PYEOF
+import sys
+sys.path.insert(0, ".")
+try:
+    from modules.asr import ASRModule
+    from core import get_logger, load_config, MQTTEventBus
+    print("[✓] All imports successful")
+except ImportError as e:
+    print(f"[✗] Import failed: {e}")
+    sys.exit(1)
+PYEOF
+
+# 4) Config validation
+say ""
+say "Step 4: Validating config/asr.yml..."
+python3 <<PYEOF
+import sys
+sys.path.insert(0, ".")
+from core import load_config
+try:
+    config = load_config("config/asr.yml", required_keys=["provider", "device", "rate"])
+    print(f"[✓] Config loaded: provider={config['provider']}, rate={config['rate']}")
+except Exception as e:
+    print(f"[✗] Config validation failed: {e}")
+    sys.exit(1)
+PYEOF
+
+say ""
+say "=== Verification Complete ==="
+say "All checks passed! Ready to start ASR module."
+say ""
+say "Next steps:"
+say "  1) Start ASR module:  python3 modules/asr/asr_module.py"
+say "  2) In another terminal, subscribe to MQTT:"
+say "     mosquitto_sub -h localhost -t 'sa/asr/#' -v"
+say "  3) Send start command:"
+say "     mosquitto_pub -h localhost -t 'sa/asr/cmd/start' -m '{}'"
+

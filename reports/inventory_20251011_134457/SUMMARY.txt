@@ -1,0 +1,16 @@
+uname -a: Linux pi4b 6.12.34+rpt-rpi-v8 #1 SMP PREEMPT Debian 1:6.12.34-1+rpt1~bookworm (2025-06-26) aarch64 GNU/Linux
+lsb_release: Distributor ID:	Debian Description:	Debian GNU/Linux 12 (bookworm) Release:	12 Codename:	bookworm 
+Python: Python 3.11.2
+[目录/文件] 可能相关的路径条目：411 条，详见 paths_raw.txt
+盘点完成：
+- 主报告：/home/MRwang/smart_assistant/reports/inventory_20251011_134457/DETAIL.md
+- 目录匹配：/home/MRwang/smart_assistant/reports/inventory_20251011_134457/paths_raw.txt
+- systemd 服务：/home/MRwang/smart_assistant/reports/inventory_20251011_134457/systemd_services.txt
+- cron 匹配：/home/MRwang/smart_assistant/reports/inventory_20251011_134457/cron_matches.txt
+- 设备/音频：/home/MRwang/smart_assistant/reports/inventory_20251011_134457/devices_audio_video.txt
+- 端口：/home/MRwang/smart_assistant/reports/inventory_20251011_134457/listening_ports.txt
+
+后续建议：
+1) 打开 SUMMARY.txt / DETAIL.md 先过一遍，确认哪些是真正的旧项目资产。
+2) 若发现漏报，调整 PATTERNS 或 SCAN_DIRS 再跑一次本脚本。
+3) 盘点确认后，再进行“快照→停旧→建新家→只读隔离”的下一步。

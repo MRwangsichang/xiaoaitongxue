@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+echo "[$(date +%H:%M:%S)] === Starting Rules Module ==="
+
+PYTHONPATH=/home/MRwang/smart_assistant:$PYTHONPATH
+export PYTHONPATH
+
+cd /home/MRwang/smart_assistant
+python3 modules/rules/rules_module.py

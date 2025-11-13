@@ -1,0 +1,236 @@
+"""
+ASR Module Main - Manages ASR lifecycle and MQTT integration
+"""
+import asyncio
+import time
+from typing import Optional, Dict
+from core import get_logger, load_config, HealthReporter
+from core.event_bus import EventBus
+
+class ASRModule:
+    """Main ASR module coordinating providers and MQTT events"""
+    
+    def __init__(self, config_path: str = "config/asr.yml"):
+        # Load config without validation
+        self.config = load_config(config_path)
+        
+        # Manually validate required keys
+        required_keys = ["provider", "device", "rate"]
+        missing_keys = []
+        for key in required_keys:
+            if key not in self.config or self.config[key] is None or self.config[key] == "":
+                missing_keys.append(key)
+        
+        if missing_keys:
+            available_keys = list(self.config.keys())
+            raise ValueError(
+                f"ASR配置缺少必填键: {missing_keys}\n"
+                f"当前可用键: {available_keys}\n"
+                f"请检查配置文件: {config_path}"
+            )
+        self.logger = get_logger("asr")
+        self.bus: Optional[EventBus] = None
+        self.health: Optional[HealthReporter] = None
+        self.provider = None
+        self.running = False
+        self._dedup_cache: Dict[str, float] = {}
+        self._dedup_window = self.config.get("dedup_ms", 2000) / 1000.0
+        
+    async def start(self):
+        """Start ASR module"""
+        try:
+            self.logger.info("=== ASR Module Starting ===")
+            self.logger.info(f"Provider: {self.config['provider']}")
+            self.logger.info(f"Device: {self.config.get('device', 'default')}")
+            self.logger.info(f"Rate: {self.config['rate']}Hz, Channels: {self.config.get('channels', 1)}")
+            
+            # Initialize MQTT bus
+            self.bus = EventBus(module_name="asr")
+            self.logger.info("MQTT connected")
+            
+            # Initialize health reporter
+            self.health = HealthReporter(
+                module_name="asr",
+                interval=self.config.get("health_interval", 10)
+            )
+            await self.health.start()
+            self.logger.info("Health reporter started")
+            
+            # Subscribe to commands
+            await self.bus.start_listening({"sa/asr/cmd/#": self._handle_command})
+            self.logger.info("Subscribed to sa/asr/cmd/#")
+            
+            # Initialize provider
+            await self._init_provider()
+            
+            self.running = True
+            self.logger.info("ASR module ready")
+            
+        except Exception as e:
+            self.logger.error(f"Failed to start ASR module: {e}", exc_info=True)
+            await self._publish_error("startup_failed", str(e))
+            raise
+            
+    async def stop(self):
+        """Stop ASR module"""
+        self.logger.info("Stopping ASR module...")
+        self.running = False
+        
+        if self.provider:
+            await self.provider.stop()
+            
+        if self.health:
+            await self.health.stop()
+            
+        self.logger.info("=== _init_provider 开始执行 ===")
+        if self.bus:
+            await self.bus.disconnect()
+            
+        self.logger.info("ASR module stopped")
+        
+    async def _init_provider(self):
+        """Initialize ASR provider based on config"""
+        provider_type = self.config["provider"]
+        
+        if provider_type == "mock":
+            from .mock_provider import MockProvider
+            self.provider = MockProvider(self.config, self.logger)
+            self.logger.info("Mock provider initialized")
+        elif provider_type == "cloud":
+            from .cloud_provider import CloudProvider
+            # Check credentials
+            import os
+            required_env = ["XF_APPID", "XF_API_KEY", "XF_API_SECRET"]
+            missing = [k for k in required_env if not os.getenv(k)]
+            if missing:
+                err_msg = f"Cloud provider requires env vars: {missing}"
+                self.logger.error(err_msg)
+                await self._publish_error("missing_credentials", err_msg)
+                # Fallback to mock
+                self.logger.warning("Falling back to mock provider")
+                from .mock_provider import MockProvider
+                self.provider = MockProvider(self.config, self.logger)
+                self.logger.info("开始初始化 CloudProvider...")
+            else:
+                self.logger.info("CloudProvider 初始化完成")
+                self.provider = CloudProvider(self.config, self.logger)
+                self.logger.info("Cloud provider initialized")
+        else:
+            raise ValueError(f"Unknown provider: {provider_type}")
+            
+    async def _handle_command(self, envelope):
+        """Handle incoming MQTT commands"""
+        # 从envelope提取信息
+        # DEBUG: 打印envelope结构
+        self.logger.info(f"DEBUG envelope类型: {type(envelope)}")
+        self.logger.info(f"DEBUG envelope内容: {envelope}")
+        self.logger.info(f"DEBUG envelope.__dict__: {getattr(envelope, '__dict__', None)}")
+        if hasattr(envelope, "payload"):
+            self.logger.info(f"DEBUG payload: {envelope.payload}")
+        if hasattr(envelope, "event_type"):
+            self.logger.info(f"DEBUG event_type: {envelope.event_type}")
+        payload = envelope.payload if hasattr(envelope, "payload") else envelope
+        event_type = envelope.__dict__.get('type', '') or getattr(envelope, 'type', '')
+        # 重构topic以兼容旧逻辑
+        topic = f"sa/asr/cmd/{event_type.split('.')[-1] if '.' in event_type else 'unknown'}"
+        cmd = topic.split("/")[-1]
+        self.logger.debug(f"Received command: {cmd}")
+        
+        try:
+            if cmd == "start":
+                await self._handle_start()
+            elif cmd == "stop":
+                await self._handle_stop()
+            elif cmd == "config":
+                await self._handle_config(payload)
+            else:
+                self.logger.warning(f"Unknown command: {cmd}")
+                
+        except Exception as e:
+            self.logger.error(f"Command handler error: {e}", exc_info=True)
+            await self._publish_error("command_failed", str(e))
+            
+    async def _handle_start(self):
+        self.logger.info("=== _handle_start被调用 ===")
+        self.logger.info(f"DEBUG: self.provider = {self.provider}")
+        """Start ASR session"""
+        if not self.provider:
+            await self._publish_error("no_provider", "Provider not initialized")
+            return
+            
+        self.logger.info("Starting ASR session")
+        await self.provider.start(self._on_recognition_result)
+        
+    async def _handle_stop(self):
+        """Stop ASR session"""
+        if not self.provider:
+            return
+            
+        self.logger.info("Stopping ASR session")
+        await self.provider.stop()
+        
+    async def _handle_config(self, payload: dict):
+        """Handle config update command"""
+        self.logger.info(f"Config update requested: {payload}")
+        # Placeholder for dynamic config updates
+        
+    async def _on_recognition_result(self, result: dict):
+        """Callback for recognition results with deduplication"""
+        text = result.get("text", "")
+        
+        # Deduplication check
+        now = time.time()
+        if text in self._dedup_cache:
+            last_time = self._dedup_cache[text]
+            if now - last_time < self._dedup_window:
+                self.logger.debug(f"Dedup: skipping repeated text within {self._dedup_window}s: {text}")
+                return
+                
+        self._dedup_cache[text] = now
+        
+        # Clean old cache entries
+        self._dedup_cache = {k: v for k, v in self._dedup_cache.items() 
+                            if now - v < self._dedup_window}
+        
+        # Publish to MQTT
+        payload = {
+            "text": text,
+            "lang": result.get("lang", "zh-CN"),
+            "confidence": result.get("confidence", 0.0),
+            "ts": result.get("ts", time.time()),
+            "corr": None  # Placeholder for correlation ID
+        }
+        
+        await self.bus.publish("sa/asr/text", "text", payload)
+        self.logger.info(f"Published ASR text: {text} (conf={payload['confidence']})")
+        
+    async def _publish_error(self, error_type: str, message: str):
+        """Publish error event"""
+        if self.bus:
+            await self.bus.publish("sa/asr/error", "error", {
+                "type": error_type,
+                "message": message,
+                "ts": time.time()
+            })
+            
+    async def run(self):
+        """Main run loop"""
+        await self.start()
+        try:
+            # Keep alive until stopped
+            while self.running:
+                await asyncio.sleep(1)
+        except KeyboardInterrupt:
+            self.logger.info("Received interrupt signal")
+        finally:
+            await self.stop()
+
+
+async def main():
+    """Entry point for running ASR module standalone"""
+    module = ASRModule()
+    await module.run()
+
+
+if __name__ == "__main__":
+    asyncio.run(main())

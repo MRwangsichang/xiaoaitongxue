@@ -1,0 +1,39 @@
+# 视觉扫描服务配置
+# 模式说明：
+#   test       - 测试模式（高频扫描，快速验证）
+#   production - 正式模式（低频扫描，节省资源）
+
+mode: test  # 当前模式（切换到正式时改为 production）
+
+# 测试模式配置（用于开发和验证）
+test:
+  scan_interval: 300       # 扫描间隔（秒）= 5分钟
+  cooldown_global: 300     # 全局冷却（秒）= 5分钟（识别到任何人后）
+  cooldown_person: 300     # 单人冷却（秒）= 5分钟（同一人再次识别）
+
+# 正式模式配置（用于日常运行）
+production:
+  scan_interval: 1800      # 扫描间隔（秒）= 30分钟（每小时2次）
+  cooldown_global: 300     # 全局冷却（秒）= 5分钟
+  cooldown_person: 3600    # 单人冷却（秒）= 1小时
+
+# 视觉识别参数（两种模式共用）
+vision:
+  model_path: "/home/MRwang/smart_assistant/data/faces/model.yml"
+  cascade_path: "/usr/share/opencv4/haarcascades/haarcascade_frontalface_default.xml"
+  frames: 10               # 投票帧数
+  frame_interval: 1.5      # 帧间隔（秒）
+  confidence_threshold: 75 # 置信度阈值（<75可点名，>85陌生人）
+  min_consistent_frames: 6 # 最少一致帧数（10帧中至少6帧）
+
+# MQTT事件发布配置
+mqtt:
+  broker: "localhost"
+  port: 1883
+  topic: "sa/vision/person_detected"  # 发布主题
+  qos: 1
+
+# 日志配置
+logging:
+  level: "INFO"            # DEBUG/INFO/WARNING/ERROR
+  module_name: "vision.scanner"

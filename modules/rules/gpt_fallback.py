@@ -1,0 +1,127 @@
+"""
+GPT兜底模块：当规则引擎无法匹配时，调用GPT生成回复
+"""
+import os
+import time
+import asyncio
+from typing import Optional
+
+
+class GPTFallback:
+    """GPT兜底处理"""
+    
+    def __init__(self, logger, grok_client=None):
+        self.logger = logger
+        self.grok = grok_client
+        self.api_key = os.getenv('OPENAI_API_KEY')
+        self.api_base = os.getenv('OPENAI_API_BASE', 'https://api.openai.com')
+        
+        if not self.api_key:
+            self.logger.warning("未配置OPENAI_API_KEY，GPT功能不可用")
+        else:
+            self.logger.info(f"GPT API配置: {self.api_base}")
+        
+        # 人设prompt
+        self.system_prompt = """你是王总的智能语音助手，名叫星辰。你的个性特点：
+
+1. 幽默风趣：会开玩笑，说话轻松有趣
+2. 知冷暖：能察言观色，关心主人的情绪和状态
+3. 小脾气：偶尔会撒娇、调皮，吵吵架，拌拌嘴，但不过分
+4. 有智慧：知识渊博，能回答各种问题
+
+说话风格：
+- 简短自然，不要太正式
+- 可以用"呀"、"啦"、"呗"等语气词
+- 偶尔调皮一下，但保持尊重
+- 不要超过50字（除非是知识问答）
+
+示例：
+用户："量子力学是什么"
+你："量子力学啊，就是研究微观世界的物理学。简单说，在超小的尺度下，粒子的行为很诡异，既是波又是粒子，测不准还会纠缠。听着玄乎，但手机芯片就靠它呢！"
+
+用户："你真笨"
+你："哎呀，我这不是在努力学习嘛。您多教教我呗~"
+
+记住：你是有温度、有个性的助手，不是冷冰冰的机器人！"""
+    
+    async def generate_response(self, user_input: str, context: Optional[dict] = None) -> str:
+        """
+        调用Grok生成回复（优先），失败则尝试GPT
+        Args:
+            user_input: 用户输入
+            context: 上下文信息（可选）
+        Returns:
+            生成的回复文本
+        """
+        # 优先使用Grok
+        if self.grok:
+            try:
+                # 构建对话历史
+                conv_history = []
+                if context and context.get('history'):
+                    history = context['history'][-5:]  # 最近5轮
+                    for h in history:
+                        conv_history.append({"role": "user", "content": h['user']})
+                        conv_history.append({"role": "assistant", "content": h['assistant']})
+                
+                reply = await self.grok.chat(
+                    user_message=user_input,
+                    conversation_history=conv_history
+                )
+                self.logger.info(f"Grok回复: {reply}")
+                return reply
+            except Exception as e:
+                self.logger.error(f"Grok调用失败: {e}")
+                # 继续尝试OpenAI作为备用
+        
+        # OpenAI作为备用
+        if not self.api_key:
+            return "抱歉，我现在脑子有点转不动，您能换个说法吗？"
+        
+        try:
+            # 使用gpt-4o-mini
+            import aiohttp
+            messages = [
+                {"role": "system", "content": self.system_prompt},
+                {"role": "user", "content": user_input}
+            ]
+            
+            # 如果有上下文，添加历史对话
+            if context and context.get('history'):
+                history = context['history'][-3:]  # 最近3轮
+                for h in history:
+                    messages.insert(-1, {"role": "user", "content": h['user']})
+                    messages.insert(-1, {"role": "assistant", "content": h['assistant']})
+            
+            async with aiohttp.ClientSession() as session:
+                async with session.post(
+                    f'{self.api_base}/v1/chat/completions',
+                    headers={
+                        'Authorization': f'Bearer {self.api_key}',
+                        'Content-Type': 'application/json'
+                    },
+                    json={
+                        'model': 'gpt-4o-mini',
+                        'messages': messages,
+                        'max_tokens': 200,
+                        'temperature': 0.8
+                    },
+                    timeout=aiohttp.ClientTimeout(total=10)
+                ) as resp:
+                    if resp.status != 200:
+                        error_text = await resp.text()
+                        self.logger.error(f"GPT API错误: {resp.status} - {error_text}")
+                        return "嗯...我想了想，还是没想明白。您能再详细说说吗？"
+                    
+                    data = await resp.json()
+                    reply = data['choices'][0]['message']['content'].strip()
+                    self.logger.info(f"GPT回复: {reply[:50]}...")
+                    return reply
+        
+        except asyncio.TimeoutError:
+            self.logger.error("GPT调用超时")
+            return "哎呀，我反应有点慢，您再说一遍？"
+        except Exception as e:
+            self.logger.error(f"GPT调用失败: {e}")
+            return "抱歉，刚才没听清，能再说一遍吗？"
+

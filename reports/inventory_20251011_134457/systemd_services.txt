@@ -1,0 +1,34 @@
+=== 运行中服务匹配（list-units）===
+  alsa-restore.service                                        loaded    active   exited  Save/Restore Sound Card State
+  alsa-state.service                                          loaded    inactive dead    Manage Sound Card State (restore and store)
+  apt-daily-upgrade.service                                   loaded    inactive dead    Daily apt upgrade and clean activities
+  apt-daily.service                                           loaded    inactive dead    Daily apt download activities
+  camfix.service                                              loaded    active   running Camera Fix Stream (Flask + OpenCV)
+  cups-browsed.service                                        loaded    active   running Make remote CUPS printers available locally
+  dpkg-db-backup.service                                      loaded    inactive dead    Daily dpkg database backup service
+  getty-static.service                                        loaded    inactive dead    getty on tty2-tty6 if dbus and logind are not available
+  greet.service                                               loaded    active   running Face greet service (Picamera2 + LBPH + ALSA TTS)
+  man-db.service                                              loaded    inactive dead    Daily man-db regeneration
+  NetworkManager-wait-online.service                          loaded    active   exited  Network Manager Wait Online
+  plymouth-quit-wait.service                                  loaded    active   exited  Hold until boot process finishes up
+  systemd-udev-settle.service                                 loaded    inactive dead    Wait for udev To Complete Device Initialization
+
+=== 已安装的服务匹配（list-unit-files）===
+alsa-restore.service                       static          -
+alsa-state.service                         static          -
+alsa-utils.service                         masked          enabled
+apt-daily-upgrade.service                  static          -
+apt-daily.service                          static          -
+cam.service                                disabled        enabled
+camfix.service                             enabled         enabled
+container-getty@.service                   static          -
+e2scrub_fail@.service                      static          -
+greet.service                              enabled         enabled
+NetworkManager-wait-online.service         enabled         enabled
+plymouth-quit-wait.service                 static          -
+systemd-boot-check-no-failures.service     disabled        disabled
+systemd-networkd-wait-online.service       disabled        disabled
+systemd-networkd-wait-online@.service      disabled        enabled
+systemd-time-wait-sync.service             disabled        disabled
+apt-daily-upgrade.timer                    enabled         enabled
+apt-daily.timer                            enabled         enabled

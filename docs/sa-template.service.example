@@ -1,0 +1,25 @@
+[Unit]
+Description=Smart Assistant - Template Service
+After=network.target mosquitto.service
+Wants=mosquitto.service
+
+[Service]
+Type=simple
+User=MRwang
+Group=MRwang
+WorkingDirectory=/home/MRwang/smart_assistant
+
+ExecStart=/usr/bin/python3 /home/MRwang/smart_assistant/modules/template/service_template.py
+
+Restart=on-failure
+RestartSec=10
+
+MemoryLimit=512M
+CPUQuota=50%
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=sa-template
+
+[Install]
+WantedBy=multi-user.target

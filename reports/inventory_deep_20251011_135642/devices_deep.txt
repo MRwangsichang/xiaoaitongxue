@@ -1,0 +1,70 @@
+== v4l2 设备（若装了 v4l-utils）==
+bcm2835-codec-decode (platform:bcm2835-codec):
+	/dev/video10
+	/dev/video11
+	/dev/video12
+	/dev/video18
+	/dev/video31
+
+bcm2835-isp (platform:bcm2835-isp):
+	/dev/video13
+	/dev/video14
+	/dev/video15
+	/dev/video16
+	/dev/video20
+	/dev/video21
+	/dev/video22
+	/dev/video23
+	/dev/media0
+	/dev/media1
+
+unicam (platform:fe801000.csi):
+	/dev/video0
+	/dev/media2
+
+rpi-hevc-dec (platform:rpi-hevc-dec):
+	/dev/video19
+	/dev/media4
+
+bcm2835-codec (vchiq:bcm2835-codec):
+	/dev/media3
+
+
+== 摄像头占用（lsof/fuser）==
+COMMAND   PID   USER   FD   TYPE DEVICE SIZE/OFF NODE NAME
+python3   765 MRwang   15u   CHR   81,8      0t0  604 /dev/video0
+python3   765 MRwang   16u   CHR   81,0      0t0  591 /dev/video13
+python3   765 MRwang   17u   CHR   81,1      0t0  592 /dev/video14
+python3   765 MRwang   18u   CHR   81,2      0t0  593 /dev/video15
+python3   765 MRwang   19u   CHR   81,3      0t0  594 /dev/video16
+pipewire  913 MRwang   55u   CHR   81,8      0t0  604 /dev/video0
+pipewire  913 MRwang   56u   CHR   81,0      0t0  591 /dev/video13
+pipewire  913 MRwang   59u   CHR   81,1      0t0  592 /dev/video14
+pipewire  913 MRwang   60u   CHR   81,2      0t0  593 /dev/video15
+pipewire  913 MRwang   61u   CHR   81,3      0t0  594 /dev/video16
+wireplumb 915 MRwang   39u   CHR   81,8      0t0  604 /dev/video0
+wireplumb 915 MRwang   40u   CHR   81,0      0t0  591 /dev/video13
+wireplumb 915 MRwang   41u   CHR   81,1      0t0  592 /dev/video14
+wireplumb 915 MRwang   42u   CHR   81,2      0t0  593 /dev/video15
+wireplumb 915 MRwang   43u   CHR   81,3      0t0  594 /dev/video16
+   765   913   915   765   913   915   765   913   915   765   913   915   765   913   915
+== ALSA 全局配置 ==
+pcm.!default {
+    type hw
+    card 0
+    device 0
+}
+
+ctl.!default {
+    type hw
+    card 0
+}
+
+pcm.i2s {
+    type hw
+    card 0
+    device 0
+    format S32_LE
+    rate 48000
+    channels 2
+}

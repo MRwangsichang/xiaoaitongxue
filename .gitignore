@@ -1,0 +1,31 @@
+# 敏感配置
+.env.local
+*.key
+config/xunfei_asr.json
+
+# 日志和缓存
+logs/
+*.log
+*.pyc
+__pycache__/
+
+# 备份和临时文件
+backups/
+_legacy_snapshots/
+captures/
+*.mp3
+*.wav
+
+# 数据库
+*.db
+.env.local*
+
+# 人脸训练数据（隐私）
+data/faces/*
+!data/faces/*.yml
+!data/faces/王总_v2.yml
+
+# 人脸训练数据（隐私）
+data/faces/*
+!data/faces/*.yml
+!data/faces/王总_v2.yml

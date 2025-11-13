@@ -1,0 +1,335 @@
+"""
+规则引擎：匹配rules.json中的规则并执行
+"""
+import json
+import re
+from typing import Dict, List, Optional, Tuple
+from modules.rules.intent_matcher import IntentMatcher
+
+
+class RulesEngine:
+    """规则匹配引擎"""
+    
+    def __init__(self, rules_file: str, logger):
+        self.logger = logger
+        self.matcher = IntentMatcher(logger)
+        self.rules = []
+        self.stories = {}
+        self.time_triggers = []
+        
+        # 加载规则
+        self._load_rules(rules_file)
+        
+        # 会话状态（简单实现：内存存储）
+        self.session_state = {}  # {session_id: {story: str, turn: int, last_score: float, watch_correction: bool}}
+        
+    def _load_rules(self, rules_file: str):
+        """加载rules.json"""
+        try:
+            with open(rules_file, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+            
+            self.rules = data.get('rules', [])
+            stories_list = data.get('stories', [])
+            
+            # 组织stories：{story_id: {turn: [responses]}}
+            for story in stories_list:
+                story_id = story['story_id']
+                turn = story['turn']
+                
+                if story_id not in self.stories:
+                    self.stories[story_id] = {}
+                if turn not in self.stories[story_id]:
+                    self.stories[story_id][turn] = []
+                    
+                self.stories[story_id][turn].append(story)
+            
+            self.logger.info(f"✓ 加载 {len(self.rules)} 条规则")
+            self.logger.info(f"✓ 加载 {len(self.stories)} 个故事")
+            
+        except Exception as e:
+            self.logger.error(f"加载规则失败: {e}")
+            raise
+    
+    def match(self, text: str, session_id: str = "default") -> Optional[Dict]:
+        """
+        匹配规则（分层策略）
+        
+        Args:
+            text: 用户输入文本
+            session_id: 会话ID（用于跟踪story状态）
+            
+        Returns:
+            匹配结果 {rule_id, actions, next_turn, need_gpt} 或 None
+        """
+        text_lower = text.strip().lower()
+        
+        # 获取当前会话状态
+        state = self.session_state.get(session_id, {})
+        current_story = state.get('story')
+        current_turn = state.get('turn', 0)
+        watch_correction = state.get('watch_correction', False)
+        
+        # 0. 检查纠正信号（如果上次是谨慎回复）
+        if watch_correction and self.matcher.detect_correction(text):
+            self.logger.warning("检测到用户纠正，需要调用GPT")
+            # 清除story状态，标记需要GPT
+            if session_id in self.session_state:
+                del self.session_state[session_id]
+            return {
+                'rule_id': 'need_gpt',
+                'actions': [],
+                'next_turn': None,
+                'need_gpt': True,
+                'reason': 'user_correction'
+            }
+        
+        # 1. 匹配全局规则（优先级高，如退下/搜索）
+        sorted_rules = sorted(self.rules, key=lambda r: r.get('priority', 0), reverse=True)
+        
+        for rule in sorted_rules:
+            if not rule.get('enabled', True):
+                continue
+                
+            if self._match_rule(rule, text_lower):
+                self.logger.info(f"✓ 匹配规则: {rule['id']}")
+                return self._prepare_rule_result(rule, session_id)
+        
+        # 2. 如果在story中，智能匹配story回复
+        if current_story and current_story in self.stories:
+            story_result, match_score = self._match_story_turn(
+                current_story, 
+                current_turn, 
+                text
+            )
+            
+            if story_result:
+                # 分层决策
+                if match_score >= 30:
+                    # 高相关：自信回复
+                    self.logger.info(f"✓ 高相关匹配 (分数:{match_score:.1f})")
+                    # 清除纠正监听标记
+                    if session_id in self.session_state:
+                        self.session_state[session_id]['watch_correction'] = False
+                    return story_result
+                    
+                elif match_score >= 15:
+                    # 中等相关：谨慎回复 + 监听纠正
+                    self.logger.warning(f"⚠️ 中等相关匹配 (分数:{match_score:.1f})，监听纠正信号")
+                    # 标记需要监听纠正
+                    if session_id in self.session_state:
+                        self.session_state[session_id]['watch_correction'] = True
+                        self.session_state[session_id]['last_score'] = match_score
+                    return story_result
+                    
+                else:
+                    # 低相关：调用GPT
+                    self.logger.warning(f"❌ 低相关匹配 (分数:{match_score:.1f})，需要GPT")
+                    # 保持在story中，但这次用GPT回答
+                    return {
+                        'rule_id': 'need_gpt',
+                        'actions': [],
+                        'next_turn': None,
+                        'need_gpt': True,
+                        'reason': 'low_match_score',
+                        'score': match_score
+                    }
+        
+        # 3. 不在story中，也没匹配规则 → 尝试Story turn 1作为入口
+        self.logger.info("未在story中，尝试匹配story入口...")
+        
+        # 尝试匹配home_smalltalk的turn 1
+        if 'home_smalltalk' in self.stories and 1 in self.stories['home_smalltalk']:
+            story_result, match_score = self._match_story_turn('home_smalltalk', 1, text)
+            
+            if story_result and match_score >= 30:
+                # 高相关：进入story
+                self.logger.info(f"✓ 通过turn 1进入story (分数:{match_score:.1f})")
+                # 设置story状态
+                self.session_state[session_id] = {
+                    'story': 'home_smalltalk',
+                    'turn': 2,  # 下次进turn 2
+                    'watch_correction': False
+                }
+                return story_result
+        
+        # 完全不相关 → 调用GPT
+        self.logger.info("未匹配任何内容，需要GPT")
+        return {
+            'rule_id': 'need_gpt',
+            'actions': [],
+            'next_turn': None,
+            'need_gpt': True,
+            'reason': 'no_match'
+        }
+    
+    def _match_rule(self, rule: Dict, text: str) -> bool:
+        """判断规则是否匹配"""
+        # 检查any_keywords（OR）
+        any_kw = rule.get('any_keywords', [])
+        if any_kw and any_kw != ['nan']:
+            if not any(kw.lower() in text for kw in any_kw if kw != 'nan'):
+                return False
+        
+        # 检查all_keywords（AND）
+        all_kw = rule.get('all_keywords', [])
+        if all_kw and all_kw != ['nan']:
+            if not all(kw.lower() in text for kw in all_kw if kw != 'nan'):
+                return False
+        
+        # 检查regex
+        regex_list = rule.get('regex', [])
+        if regex_list and regex_list != ['nan']:
+            matched = False
+            for pattern in regex_list:
+                if pattern != 'nan':
+                    try:
+                        if re.search(pattern, text):
+                            matched = True
+                            break
+                    except:
+                        pass
+            if not matched:
+                return False
+        
+        return True
+    
+    def _prepare_rule_result(self, rule: Dict, session_id: str) -> Dict:
+        """准备规则执行结果"""
+        actions = rule.get('actions', [])
+        
+        result = {
+            'rule_id': rule['id'],
+            'actions': actions,
+            'next_turn': None
+        }
+        
+        # 检查actions中是否有set_state（进入story）
+        for action in actions:
+            if action['type'] == 'set_state':
+                params = action['params']
+                if 'story' in params:
+                    # 解析 "story=home_smalltalk|turn=1"
+                    story_str = params['story']
+                    if '|' in story_str:
+                        parts = story_str.split('|')
+                        story_name = parts[0]
+                        turn = 1
+                        for part in parts[1:]:
+                            if 'turn=' in part:
+                                turn = int(part.split('=')[1])
+                        
+                        # 更新会话状态
+                        self.session_state[session_id] = {
+                            'story': story_name,
+                            'turn': turn
+                        }
+                        
+                        result['next_turn'] = {
+                            'story': story_name,
+                            'turn': turn
+                        }
+        
+        return result
+    
+    def _match_story_turn(self, story_id: str, turn: int, text: str) -> Tuple[Optional[Dict], float]:
+        """匹配story的当前turn并返回响应和匹配分数"""
+        if story_id not in self.stories:
+            return None, 0.0
+        
+        if turn not in self.stories[story_id]:
+            return None, 0.0
+        
+        responses = self.stories[story_id][turn]
+        if not responses:
+            return None, 0.0
+        
+        # 计算所有候选的匹配分数
+        scored_responses = []
+        for resp in responses:
+            response_text = ""
+            for action in resp.get('actions', []):
+                if action['type'] == 'say':
+                    response_text = action['params'].get('text', '')
+                    break
+            score = self.matcher.calculate_match_score(text, response_text)
+            scored_responses.append((score, resp))
+        
+        # 选择最高分
+        scored_responses.sort(key=lambda x: x[0], reverse=True)
+        best_score, best_response = scored_responses[0]
+        
+        self.logger.info(f"Story匹配分数: {best_score:.1f}")
+        
+        actions = best_response.get('actions', [])
+        
+        result = {
+            'rule_id': f"{story_id}_turn_{turn}",
+            'actions': actions,
+            'next_turn': None
+        }
+        
+        # 检查是否推进到下一个turn
+        has_set_state = False
+        for action in actions:
+            if action['type'] == 'set_state':
+                has_set_state = True
+                params = action['params']
+                if 'story' in params:
+                    story_str = params['story']
+                    if '|' in story_str:
+                        parts = story_str.split('|')
+                        next_story = parts[0]
+                        next_turn = turn + 1
+                        for part in parts[1:]:
+                            if 'turn=' in part:
+                                next_turn = int(part.split('=')[1])
+                        
+                        session_id = list(self.session_state.keys())[0] if self.session_state else "default"
+                        self.session_state[session_id] = {
+                            'story': next_story,
+                            'turn': next_turn,
+                            'watch_correction': False
+                        }
+                        
+                        result['next_turn'] = {
+                            'story': next_story,
+                            'turn': next_turn
+                        }
+                else:
+                    session_id = list(self.session_state.keys())[0] if self.session_state else "default"
+                    if session_id in self.session_state:
+                        del self.session_state[session_id]
+        
+        if not has_set_state:
+            session_id = list(self.session_state.keys())[0] if self.session_state else "default"
+            if session_id in self.session_state:
+                del self.session_state[session_id]
+                self.logger.info(f"Story {story_id} 已结束，清除会话状态")
+        
+        return result, best_score
+
+# 测试代码
+if __name__ == "__main__":
+    import sys
+    sys.path.insert(0, '/home/MRwang/smart_assistant')
+    from core.logger import get_logger
+    
+    logger = get_logger("rules_test")
+    engine = RulesEngine('/home/MRwang/smart_assistant/rules.json', logger)
+    
+    # 测试1：问候
+    print("\n=== 测试1：问候 ===")
+    result = engine.match("face_detected", "test_session")
+    print(f"结果: {result}")
+    
+    # 测试2：story推进
+    if result and result['next_turn']:
+        print("\n=== 测试2：Story Turn 2 ===")
+        result2 = engine.match("我想你啊", "test_session")
+        print(f"结果: {result2}")
+    
+    # 测试3：退出
+    print("\n=== 测试3：退出 ===")
+    result3 = engine.match("退下", "test_session2")
+    print(f"结果: {result3}")

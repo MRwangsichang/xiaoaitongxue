@@ -1,0 +1,129 @@
+"""讯飞超拟人TTS Provider - WebSocket实时合成"""
+import asyncio
+import websockets
+import json
+import hmac
+import hashlib
+import base64
+from urllib.parse import urlencode
+from datetime import datetime
+import os
+
+class XunfeiTTSProvider:
+    def __init__(self, config, logger):
+        self.config = config
+        self.logger = logger
+        
+        self.app_id = os.getenv("XF_TTS_APPID")
+        self.api_key = os.getenv("XF_TTS_API_KEY")
+        self.api_secret = os.getenv("XF_TTS_API_SECRET")
+        
+        if not all([self.app_id, self.api_key, self.api_secret]):
+            raise ValueError("Missing XF_TTS credentials")
+        
+        self.ws_url = config["xunfei"]["ws_url"]
+        self.ws = None
+
+    async def synthesize(self, text: str) -> str:
+        """合成音频，返回文件路径"""
+        url = self._create_auth_url()
+        
+        async with websockets.connect(url) as ws:
+            self.ws = ws
+            await self._send_request(text)
+            audio_data = await self._receive_audio()
+            return self._save_audio(audio_data)
+
+    def _create_auth_url(self) -> str:
+        """生成认证URL"""
+        date = datetime.utcnow().strftime("%a, %d %b %Y %H:%M:%S GMT")
+        
+        signature_origin = f"host: tts-api.xfyun.cn\ndate: {date}\nGET /v2/tts HTTP/1.1"
+        signature_sha = hmac.new(
+            self.api_secret.encode("utf-8"),
+            signature_origin.encode("utf-8"),
+            digestmod=hashlib.sha256
+        ).digest()
+        signature = base64.b64encode(signature_sha).decode()
+        
+        authorization_origin = (
+            f'api_key="{self.api_key}", algorithm="hmac-sha256", '
+            f'headers="host date request-line", signature="{signature}"'
+        )
+        authorization = base64.b64encode(authorization_origin.encode()).decode()
+        
+        params = {
+            "authorization": authorization,
+            "date": date,
+            "host": "tts-api.xfyun.cn"
+        }
+        
+        return f"{self.ws_url}?{urlencode(params)}"
+
+    async def _send_request(self, text: str):
+        """发送合成请求"""
+        params = {
+            "common": {"app_id": self.app_id},
+            "business": {
+                "vcn": self.config["xunfei"]["vcn"],
+                "speed": self.config["xunfei"]["speed"],
+                "volume": self.config["xunfei"]["volume"],
+                "pitch": self.config["xunfei"]["pitch"],
+                "aue": self.config["xunfei"]["aue"],
+                "tte": "UTF8"
+            },
+            "data": {
+                "text": base64.b64encode(text.encode("utf-8")).decode(),
+                "status": 2
+            }
+        }
+        
+        self.logger.info(f"[DEBUG] 发送请求:\n{json.dumps(params, indent=2, ensure_ascii=False)}")
+        
+        await self.ws.send(json.dumps(params))
+
+    async def _receive_audio(self) -> bytes:
+        """接收音频数据流"""
+        audio_chunks = []
+        timeout = self.config["xunfei"]["timeout"]
+        
+        try:
+            while True:
+                msg = await asyncio.wait_for(self.ws.recv(), timeout=timeout)
+                data = json.loads(msg)
+                code = data.get("code")
+                
+                # 打印讯飞的完整返回（第一条消息）
+                if not audio_chunks:
+                    self.logger.info(f"[DEBUG] 讯飞首条返回:\n{json.dumps(data, indent=2, ensure_ascii=False)}")
+                
+                if code != 0:
+                    self.logger.error(f"[ERROR] 讯飞错误: {json.dumps(data, ensure_ascii=False)}")
+                    raise Exception(f"讯飞TTS错误 {code}: {data.get('message', 'Unknown')}")
+                
+                audio_b64 = data.get("data", {}).get("audio")
+                if audio_b64:
+                    audio_chunks.append(base64.b64decode(audio_b64))
+                
+                status = data.get("data", {}).get("status")
+                if status == 2:
+                    break
+            
+            return b"".join(audio_chunks)
+        
+        except asyncio.TimeoutError:
+            raise Exception("讯飞TTS超时")
+
+    def _save_audio(self, audio_data: bytes) -> str:
+        """保存音频到临时文件"""
+        cache_dir = self.config["audio"]["cache_dir"]
+        os.makedirs(cache_dir, exist_ok=True)
+        
+        filename = f"tts_test_{int(datetime.now().timestamp() * 1000)}.mp3"
+        filepath = os.path.join(cache_dir, filename)
+        
+        with open(filepath, "wb") as f:
+            f.write(audio_data)
+        
+        self.logger.info(f"✓ 音频已保存: {filepath}")
+        return filepath

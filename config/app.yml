@@ -1,0 +1,26 @@
+# Smart Assistant 核心配置
+# 版本: v2.1
+
+mqtt:
+  broker: localhost
+  port: 1883
+  qos: 1
+  keepalive: 60
+
+logging:
+  level: INFO  # DEBUG/INFO/WARNING/ERROR
+  dir: logs
+  rotate_days: 7
+
+system:
+  project_root: /home/MRwang/smart_assistant
+  service_prefix: sa
+  
+# 窗口1暂不启用以下配置
+# asr:
+#   provider: xunfei
+#   mode: online  # online/offline/auto
+
+# vision:
+#   camera_index: 0
+#   resolution: [480, 360]

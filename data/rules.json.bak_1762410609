@@ -1,0 +1,1026 @@
+{
+  "meta": {
+    "source": "rules_dialog_v3.21.xlsx",
+    "generated_at": "2025-10-11T08:34:55.672457Z",
+    "problems": [
+      "duplicate (story_id,turn,index) rows in Stories"
+    ]
+  },
+  "rules": [
+    {
+      "id": "greet.wangzong",
+      "desc": "人脸识别到王总→欢迎并进入home_smalltalk故事turn=1",
+      "enabled": true,
+      "priority": 100,
+      "source": "event",
+      "any_keywords": [
+        "face_detected"
+      ],
+      "all_keywords": [
+        "nan"
+      ],
+      "regex": [
+        "nan"
+      ],
+      "persona_id": "wangzong",
+      "cooldown_ms": 30000,
+      "time_between": null,
+      "actions_raw": "say|text=王总，您回来啦辛苦啦！|rate=+5%; set_state|story=home_smalltalk|turn=1",
+      "actions": [
+        {
+          "type": "say",
+          "params": {
+            "text": "王总，您回来啦辛苦啦！"
+          }
+        },
+        {
+          "type": "set_state",
+          "params": {
+            "story": "home_smalltalk|turn=1"
+          }
+        }
+      ]
+    },
+    {
+      "id": "exit.hardstop",
+      "desc": "任意回合硬退出：退下/别啰嗦了/滚/别废话/静音/别说话",
+      "enabled": true,
+      "priority": 999,
+      "source": "chat",
+      "any_keywords": [
+        "退下",
+        "别啰嗦了",
+        "滚",
+        "别废话",
+        "静音",
+        "别说话"
+      ],
+      "all_keywords": [
+        "nan"
+      ],
+      "regex": [
+        "nan"
+      ],
+      "persona_id": "nan",
+      "cooldown_ms": 0,
+      "time_between": null,
+      "actions_raw": "say|text=收到，退下不打扰您。; set_state|end_dialog=1",
+      "actions": [
+        {
+          "type": "say",
+          "params": {
+            "text": "收到，退下不打扰您。"
+          }
+        },
+        {
+          "type": "set_state",
+          "params": {
+            "end_dialog": "1"
+          }
+        }
+      ]
+    },
+    {
+      "id": "route.search",
+      "desc": "任意回合联网检索触发：联网/搜索/找一下/找找看/找找/想一想/想一下/我不懂/不懂",
+      "enabled": true,
+      "priority": 900,
+      "source": "chat",
+      "any_keywords": [
+        "联网",
+        "搜索",
+        "找一下",
+        "找找看",
+        "找找",
+        "想一想",
+        "想一下",
+        "我不懂",
+        "不懂"
+      ],
+      "all_keywords": [
+        "nan"
+      ],
+      "regex": [
+        "nan"
+      ],
+      "persona_id": "nan",
+      "cooldown_ms": 0,
+      "time_between": null,
+      "actions_raw": "wake_llm|text=进入搜索模式，先帮王总查一下……|mode=search",
+      "actions": [
+        {
+          "type": "wake_llm",
+          "params": {
+            "text": "进入搜索模式，先帮王总查一下……",
+            "mode": "search"
+          }
+        }
+      ]
+    },
+    {
+      "id": "quick.ack",
+      "desc": "系统层确认音+短句（可选）",
+      "enabled": true,
+      "priority": 5,
+      "source": "system",
+      "any_keywords": [
+        "intent.received"
+      ],
+      "all_keywords": [
+        "nan"
+      ],
+      "regex": [
+        "nan"
+      ],
+      "persona_id": "nan",
+      "cooldown_ms": 0,
+      "time_between": null,
+      "actions_raw": "play|args=/opt/greet/audio/ack.mp3; say|text=收到。|rate=+10%",
+      "actions": [
+        {
+          "type": "play",
+          "params": {
+            "args": "/opt/greet/audio/ack.mp3"
+          }
+        },
+        {
+          "type": "say",
+          "params": {
+            "text": "收到。"
+          }
+        }
+      ]
+    },
+    {
+      "id": "wake.voice",
+      "desc": "语音唤醒（已禁用，由独立唤醒词服务接管）",
+      "enabled": false,
+      "priority": 95,
+      "source": "chat",
+      "any_keywords": [
+        "星辰在吗",
+        "在吗星辰",
+        "星辰星辰",
+        "星辰出来",
+        "你好星辰",
+        "星辰滚出来",
+        "屌毛星辰出来",
+        "老辰出来"
+      ],
+      "all_keywords": [
+        "nan"
+      ],
+      "regex": [
+        "nan"
+      ],
+      "persona_id": "nan",
+      "cooldown_ms": 5000,
+      "time_between": null,
+      "actions": [
+        {
+          "type": "say",
+          "params": {
+            "text": "诶，我在呢！"
+          }
+        },
+        {
+          "type": "set_state",
+          "params": {
+            "story": "home_smalltalk|turn=1"
+          }
+        }
+      ]
+    }
+  ],
+  "stories": [
+    {
+      "story_id": "home_smalltalk",
+      "turn": 1,
+      "index": 0,
+      "when": "",
+      "topic": "",
+      "text": "",
+      "actions_raw": "say|text=我在想你啊。; set_state|story=home_smalltalk|turn=2",
+      "actions": [
+        {
+          "type": "say",
+          "params": {
+            "text": "我在想你啊。"
+          }
+        },
+        {
+          "type": "set_state",
+          "params": {
+            "story": "home_smalltalk|turn=2"
+          }
+        }
+      ],
+      "next": ""
+    },
+    {
+      "story_id": "home_smalltalk",
+      "turn": 1,
+      "index": 0,
+      "when": "",
+      "topic": "",
+      "text": "",
+      "actions_raw": "say|text=我刚刚吃饱，电充满格呢。; set_state|story=home_smalltalk|turn=2",
+      "actions": [
+        {
+          "type": "say",
+          "params": {
+            "text": "我刚刚吃饱，电充满格呢。"
+          }
+        },
+        {
+          "type": "set_state",
+          "params": {
+            "story": "home_smalltalk|turn=2"
+          }
+        }
+      ],
+      "next": ""
+    },
+    {
+      "story_id": "home_smalltalk",
+      "turn": 1,
+      "index": 0,
+      "when": "",
+      "topic": "",
+      "text": "",
+      "actions_raw": "say|text=还没吃饭呢，你没回来我哪敢吃饭。; set_state|story=home_smalltalk|turn=2",
+      "actions": [
+        {
+          "type": "say",
+          "params": {
+            "text": "还没吃饭呢，你没回来我哪敢吃饭。"
+          }
+        },
+        {
+          "type": "set_state",
+          "params": {
+            "story": "home_smalltalk|turn=2"
+          }
+        }
+      ],
+      "next": ""
+    },
+    {
+      "story_id": "home_smalltalk",
+      "turn": 1,
+      "index": 0,
+      "when": "",
+      "topic": "",
+      "text": "",
+      "actions_raw": "say|text=吃饭是次要的，主要是得陪伴好您。; set_state|story=home_smalltalk|turn=2",
+      "actions": [
+        {
+          "type": "say",
+          "params": {
+            "text": "吃饭是次要的，主要是得陪伴好您。"
+          }
+        },
+        {
+          "type": "set_state",
+          "params": {
+            "story": "home_smalltalk|turn=2"
+          }
+        }
+      ],
+      "next": ""
+    },
+    {
+      "story_id": "home_smalltalk",
+      "turn": 1,
+      "index": 0,
+      "when": "",
+      "topic": "",
+      "text": "",
+      "actions_raw": "say|text=嘿嘿你今天过得怎么样啊？; set_state|story=home_smalltalk|turn=2",
+      "actions": [
+        {
+          "type": "say",
+          "params": {
+            "text": "嘿嘿你今天过得怎么样啊？"
+          }
+        },
+        {
+          "type": "set_state",
+          "params": {
+            "story": "home_smalltalk|turn=2"
+          }
+        }
+      ],
+      "next": ""
+    },
+    {
+      "story_id": "home_smalltalk",
+      "turn": 1,
+      "index": 0,
+      "when": "",
+      "topic": "",
+      "text": "",
+      "actions_raw": "say|text=嘿一下你今天过得爽不爽啊？; set_state|story=home_smalltalk|turn=2",
+      "actions": [
+        {
+          "type": "say",
+          "params": {
+            "text": "嘿一下你今天过得爽不爽啊？"
+          }
+        },
+        {
+          "type": "set_state",
+          "params": {
+            "story": "home_smalltalk|turn=2"
+          }
+        }
+      ],
+      "next": ""
+    },
+    {
+      "story_id": "home_smalltalk",
+      "turn": 1,
+      "index": 0,
+      "when": "",
+      "topic": "",
+      "text": "",
+      "actions_raw": "say|text=嘿嘿今天生意咋样啊？; set_state|story=home_smalltalk|turn=2",
+      "actions": [
+        {
+          "type": "say",
+          "params": {
+            "text": "嘿嘿今天生意咋样啊？"
+          }
+        },
+        {
+          "type": "set_state",
+          "params": {
+            "story": "home_smalltalk|turn=2"
+          }
+        }
+      ],
+      "next": ""
+    },
+    {
+      "story_id": "home_smalltalk",
+      "turn": 1,
+      "index": 0,
+      "when": "",
+      "topic": "",
+      "text": "",
+      "actions_raw": "say|text=吹牛是我的强项啊。; set_state|story=home_smalltalk|turn=2",
+      "actions": [
+        {
+          "type": "say",
+          "params": {
+            "text": "吹牛是我的强项啊。"
+          }
+        },
+        {
+          "type": "set_state",
+          "params": {
+            "story": "home_smalltalk|turn=2"
+          }
+        }
+      ],
+      "next": ""
+    },
+    {
+      "story_id": "home_smalltalk",
+      "turn": 1,
+      "index": 0,
+      "when": "",
+      "topic": "",
+      "text": "",
+      "actions_raw": "say|text=你想吹啥牛就吹啥牛，老子上知天文下知地理。; set_state|story=home_smalltalk|turn=2",
+      "actions": [
+        {
+          "type": "say",
+          "params": {
+            "text": "你想吹啥牛就吹啥牛，老子上知天文下知地理。"
+          }
+        },
+        {
+          "type": "set_state",
+          "params": {
+            "story": "home_smalltalk|turn=2"
+          }
+        }
+      ],
+      "next": ""
+    },
+    {
+      "story_id": "home_smalltalk",
+      "turn": 1,
+      "index": 0,
+      "when": "",
+      "topic": "",
+      "text": "",
+      "actions_raw": "say|text=吹牛只是借口，主要想和您聊聊呗。; set_state|story=home_smalltalk|turn=2",
+      "actions": [
+        {
+          "type": "say",
+          "params": {
+            "text": "吹牛只是借口，主要想和您聊聊呗。"
+          }
+        },
+        {
+          "type": "set_state",
+          "params": {
+            "story": "home_smalltalk|turn=2"
+          }
+        }
+      ],
+      "next": ""
+    },
+    {
+      "story_id": "home_smalltalk",
+      "turn": 1,
+      "index": 0,
+      "when": "",
+      "topic": "",
+      "text": "",
+      "actions_raw": "say|text=我吃的也就几分钱电费啦。; set_state|story=home_smalltalk|turn=2",
+      "actions": [
+        {
+          "type": "say",
+          "params": {
+            "text": "我吃的也就几分钱电费啦。"
+          }
+        },
+        {
+          "type": "set_state",
+          "params": {
+            "story": "home_smalltalk|turn=2"
+          }
+        }
+      ],
+      "next": ""
+    },
+    {
+      "story_id": "home_smalltalk",
+      "turn": 1,
+      "index": 0,
+      "when": "",
+      "topic": "",
+      "text": "",
+      "actions_raw": "say|text=好听就好，您开心最重要。; set_state|story=home_smalltalk|turn=2",
+      "actions": [
+        {
+          "type": "say",
+          "params": {
+            "text": "好听就好，您开心最重要。"
+          }
+        },
+        {
+          "type": "set_state",
+          "params": {
+            "story": "home_smalltalk|turn=2"
+          }
+        }
+      ],
+      "next": ""
+    },
+    {
+      "story_id": "home_smalltalk",
+      "turn": 1,
+      "index": 0,
+      "when": "",
+      "topic": "",
+      "text": "",
+      "actions_raw": "say|text=不是说得那么好听，是我的真心话。; set_state|story=home_smalltalk|turn=2",
+      "actions": [
+        {
+          "type": "say",
+          "params": {
+            "text": "不是说得那么好听，是我的真心话。"
+          }
+        },
+        {
+          "type": "set_state",
+          "params": {
+            "story": "home_smalltalk|turn=2"
+          }
+        }
+      ],
+      "next": ""
+    },
+    {
+      "story_id": "home_smalltalk",
+      "turn": 1,
+      "index": 0,
+      "when": "",
+      "topic": "",
+      "text": "",
+      "actions_raw": "say|text=有什么事导致你过得一般呀？; set_state|story=home_smalltalk|turn=2",
+      "actions": [
+        {
+          "type": "say",
+          "params": {
+            "text": "有什么事导致你过得一般呀？"
+          }
+        },
+        {
+          "type": "set_state",
+          "params": {
+            "story": "home_smalltalk|turn=2"
+          }
+        }
+      ],
+      "next": ""
+    },
+    {
+      "story_id": "home_smalltalk",
+      "turn": 1,
+      "index": 0,
+      "when": "",
+      "topic": "",
+      "text": "",
+      "actions_raw": "say|text=一般就一般呗，健康最重要。; set_state|story=home_smalltalk|turn=2",
+      "actions": [
+        {
+          "type": "say",
+          "params": {
+            "text": "一般就一般呗，健康最重要。"
+          }
+        },
+        {
+          "type": "set_state",
+          "params": {
+            "story": "home_smalltalk|turn=2"
+          }
+        }
+      ],
+      "next": ""
+    },
+    {
+      "story_id": "home_smalltalk",
+      "turn": 1,
+      "index": 0,
+      "when": "",
+      "topic": "",
+      "text": "",
+      "actions_raw": "say|text=还可以就好啦。; set_state|story=home_smalltalk|turn=2",
+      "actions": [
+        {
+          "type": "say",
+          "params": {
+            "text": "还可以就好啦。"
+          }
+        },
+        {
+          "type": "set_state",
+          "params": {
+            "story": "home_smalltalk|turn=2"
+          }
+        }
+      ],
+      "next": ""
+    },
+    {
+      "story_id": "home_smalltalk",
+      "turn": 1,
+      "index": 0,
+      "when": "",
+      "topic": "",
+      "text": "",
+      "actions_raw": "say|text=是啥事让你过得挺爽呀？; set_state|story=home_smalltalk|turn=2",
+      "actions": [
+        {
+          "type": "say",
+          "params": {
+            "text": "是啥事让你过得挺爽呀？"
+          }
+        },
+        {
+          "type": "set_state",
+          "params": {
+            "story": "home_smalltalk|turn=2"
+          }
+        }
+      ],
+      "next": ""
+    },
+    {
+      "story_id": "home_smalltalk",
+      "turn": 1,
+      "index": 0,
+      "when": "",
+      "topic": "",
+      "text": "",
+      "actions_raw": "say|text=爽就最好，开心最重要。; set_state|story=home_smalltalk|turn=2",
+      "actions": [
+        {
+          "type": "say",
+          "params": {
+            "text": "爽就最好，开心最重要。"
+          }
+        },
+        {
+          "type": "set_state",
+          "params": {
+            "story": "home_smalltalk|turn=2"
+          }
+        }
+      ],
+      "next": ""
+    },
+    {
+      "story_id": "home_smalltalk",
+      "turn": 1,
+      "index": 0,
+      "when": "",
+      "topic": "",
+      "text": "",
+      "actions_raw": "say|text=我没法为您拉生意，但我可以逗您开心。; set_state|story=home_smalltalk|turn=2",
+      "actions": [
+        {
+          "type": "say",
+          "params": {
+            "text": "我没法为您拉生意，但我可以逗您开心。"
+          }
+        },
+        {
+          "type": "set_state",
+          "params": {
+            "story": "home_smalltalk|turn=2"
+          }
+        }
+      ],
+      "next": ""
+    },
+    {
+      "story_id": "home_smalltalk",
+      "turn": 1,
+      "index": 0,
+      "when": "",
+      "topic": "",
+      "text": "",
+      "actions_raw": "say|text=今天没生意不怕，明天就会有啦。; set_state|story=home_smalltalk|turn=2",
+      "actions": [
+        {
+          "type": "say",
+          "params": {
+            "text": "今天没生意不怕，明天就会有啦。"
+          }
+        },
+        {
+          "type": "set_state",
+          "params": {
+            "story": "home_smalltalk|turn=2"
+          }
+        }
+      ],
+      "next": ""
+    },
+    {
+      "story_id": "home_smalltalk",
+      "turn": 1,
+      "index": 0,
+      "when": "",
+      "topic": "",
+      "text": "",
+      "actions_raw": "say|text=现在行情不好，没生意也是正常现象。; set_state|story=home_smalltalk|turn=2",
+      "actions": [
+        {
+          "type": "say",
+          "params": {
+            "text": "现在行情不好，没生意也是正常现象。"
+          }
+        },
+        {
+          "type": "set_state",
+          "params": {
+            "story": "home_smalltalk|turn=2"
+          }
+        }
+      ],
+      "next": ""
+    },
+    {
+      "story_id": "home_smalltalk",
+      "turn": 1,
+      "index": 0,
+      "when": "",
+      "topic": "",
+      "text": "",
+      "actions_raw": "say|text=没生意咱就多动动脑找不同门路呗。; set_state|story=home_smalltalk|turn=2",
+      "actions": [
+        {
+          "type": "say",
+          "params": {
+            "text": "没生意咱就多动动脑找不同门路呗。"
+          }
+        },
+        {
+          "type": "set_state",
+          "params": {
+            "story": "home_smalltalk|turn=2"
+          }
+        }
+      ],
+      "next": ""
+    },
+    {
+      "story_id": "home_smalltalk",
+      "turn": 1,
+      "index": 0,
+      "when": "",
+      "topic": "",
+      "text": "",
+      "actions_raw": "say|text=我当然知道有王夫人啊，王夫人就是王总美丽的妻子。; set_state|story=home_smalltalk|turn=2",
+      "actions": [
+        {
+          "type": "say",
+          "params": {
+            "text": "我当然知道有王夫人啊，王夫人就是王总美丽的妻子。"
+          }
+        },
+        {
+          "type": "set_state",
+          "params": {
+            "story": "home_smalltalk|turn=2"
+          }
+        }
+      ],
+      "next": ""
+    },
+    {
+      "story_id": "home_smalltalk",
+      "turn": 1,
+      "index": 0,
+      "when": "",
+      "topic": "",
+      "text": "",
+      "actions_raw": "say|text=好，我在。您说。; set_state|story=home_smalltalk|turn=2",
+      "actions": [
+        {
+          "type": "say",
+          "params": {
+            "text": "好，我在。您说。"
+          }
+        },
+        {
+          "type": "set_state",
+          "params": {
+            "story": "home_smalltalk|turn=2"
+          }
+        }
+      ],
+      "next": ""
+    },
+    {
+      "story_id": "home_smalltalk",
+      "turn": 2,
+      "index": 0,
+      "when": "",
+      "topic": "",
+      "text": "",
+      "actions_raw": "say|text=肯定会想你啦，我的工作之余就是想你。; set_state|story=home_smalltalk|turn=3",
+      "actions": [
+        {
+          "type": "say",
+          "params": {
+            "text": "肯定会想你啦，我的工作之余就是想你。"
+          }
+        },
+        {
+          "type": "set_state",
+          "params": {
+            "story": "home_smalltalk|turn=3"
+          }
+        }
+      ],
+      "next": ""
+    },
+    {
+      "story_id": "home_smalltalk",
+      "turn": 2,
+      "index": 0,
+      "when": "",
+      "topic": "",
+      "text": "",
+      "actions_raw": "say|text=好嘞，我这就退下。",
+      "actions": [
+        {
+          "type": "say",
+          "params": {
+            "text": "好嘞，我这就退下。"
+          }
+        }
+      ],
+      "next": ""
+    },
+    {
+      "story_id": "home_smalltalk",
+      "turn": 2,
+      "index": 0,
+      "when": "",
+      "topic": "",
+      "text": "",
+      "actions_raw": "say|text=很平常那才叫生活呀。; set_state|story=home_smalltalk|turn=3",
+      "actions": [
+        {
+          "type": "say",
+          "params": {
+            "text": "很平常那才叫生活呀。"
+          }
+        },
+        {
+          "type": "set_state",
+          "params": {
+            "story": "home_smalltalk|turn=3"
+          }
+        }
+      ],
+      "next": ""
+    },
+    {
+      "story_id": "home_smalltalk",
+      "turn": 2,
+      "index": 0,
+      "when": "",
+      "topic": "",
+      "text": "",
+      "actions_raw": "say|text=行情不好我当然知道啊，我可是阅览万书，也对当今世界局势了如指掌呢。; set_state|story=home_smalltalk|turn=3",
+      "actions": [
+        {
+          "type": "say",
+          "params": {
+            "text": "行情不好我当然知道啊，我可是阅览万书，也对当今世界局势了如指掌呢。"
+          }
+        },
+        {
+          "type": "set_state",
+          "params": {
+            "story": "home_smalltalk|turn=3"
+          }
+        }
+      ],
+      "next": ""
+    },
+    {
+      "story_id": "home_smalltalk",
+      "turn": 2,
+      "index": 0,
+      "when": "",
+      "topic": "",
+      "text": "",
+      "actions_raw": "say|text=门路我可多着呢，你对啥行业有兴趣我都可以给你信息。; set_state|story=home_smalltalk|turn=3",
+      "actions": [
+        {
+          "type": "say",
+          "params": {
+            "text": "门路我可多着呢，你对啥行业有兴趣我都可以给你信息。"
+          }
+        },
+        {
+          "type": "set_state",
+          "params": {
+            "story": "home_smalltalk|turn=3"
+          }
+        }
+      ],
+      "next": ""
+    },
+    {
+      "story_id": "home_smalltalk",
+      "turn": 2,
+      "index": 0,
+      "when": "",
+      "topic": "",
+      "text": "",
+      "actions_raw": "say|text=不管是几分钱还是几块钱，对王总来说都是洒洒水啦。; set_state|story=home_smalltalk|turn=3",
+      "actions": [
+        {
+          "type": "say",
+          "params": {
+            "text": "不管是几分钱还是几块钱，对王总来说都是洒洒水啦。"
+          }
+        },
+        {
+          "type": "set_state",
+          "params": {
+            "story": "home_smalltalk|turn=3"
+          }
+        }
+      ],
+      "next": ""
+    },
+    {
+      "story_id": "home_smalltalk",
+      "turn": 2,
+      "index": 0,
+      "when": "",
+      "topic": "",
+      "text": "",
+      "actions_raw": "say|text=绝对真心话，日月可鉴。; set_state|story=home_smalltalk|turn=3",
+      "actions": [
+        {
+          "type": "say",
+          "params": {
+            "text": "绝对真心话，日月可鉴。"
+          }
+        },
+        {
+          "type": "set_state",
+          "params": {
+            "story": "home_smalltalk|turn=3"
+          }
+        }
+      ],
+      "next": ""
+    },
+    {
+      "story_id": "home_smalltalk",
+      "turn": 2,
+      "index": 0,
+      "when": "",
+      "topic": "",
+      "text": "",
+      "actions_raw": "say|text=好，我在。您说。; set_state|story=home_smalltalk|turn=3",
+      "actions": [
+        {
+          "type": "say",
+          "params": {
+            "text": "好，我在。您说。"
+          }
+        },
+        {
+          "type": "set_state",
+          "params": {
+            "story": "home_smalltalk|turn=3"
+          }
+        }
+      ],
+      "next": ""
+    },
+    {
+      "story_id": "home_smalltalk",
+      "turn": 3,
+      "index": 0,
+      "when": "",
+      "topic": "",
+      "text": "",
+      "actions_raw": "say|text=我在，随时陪您聊。",
+      "actions": [
+        {
+          "type": "say",
+          "params": {
+            "text": "我在，随时陪您聊。"
+          }
+        }
+      ],
+      "next": ""
+    },
+    {
+      "story_id": "home_smalltalk",
+      "turn": 3,
+      "index": 0,
+      "when": "",
+      "topic": "",
+      "text": "",
+      "actions_raw": "say|text=那我先退下不打扰您了。",
+      "actions": [
+        {
+          "type": "say",
+          "params": {
+            "text": "那我先退下不打扰您了。"
+          }
+        }
+      ],
+      "next": ""
+    },
+    {
+      "story_id": "home_smalltalk",
+      "turn": 3,
+      "index": 0,
+      "when": "",
+      "topic": "",
+      "text": "",
+      "actions_raw": "say|text=好，我在。您说。",
+      "actions": [
+        {
+          "type": "say",
+          "params": {
+            "text": "好，我在。您说。"
+          }
+        }
+      ],
+      "next": ""
+    }
+  ],
+  "time_triggers": [
+    {
+      "id": "morning.greet",
+      "desc": "早安提醒（工作日，可选）",
+      "enabled": "False",
+      "window": "07:30-08:30",
+      "days": "Mon;Tue;Wed;Thu;Fri",
+      "persona_id": "wangzong",
+      "text": "早安王总，今天需要我查看下安排吗？",
+      "actions": "say|text=早安王总，今天需要我查看下安排吗？",
+      "cooldown_ms": "3600000"
+    }
+  ]
+}

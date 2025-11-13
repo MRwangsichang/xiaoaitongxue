@@ -1,0 +1,29 @@
+TTS模块版本标识
+==================
+
+版本标签: tts_stable_20251029_225218
+发布日期: 2025-10-29
+状态: 稳定版本 (Stable)
+
+功能清单:
+- 讯飞x5超拟人TTS（聆飞逸男声）
+- Edge-TTS兜底方案（云希男声）
+- 自动切换逻辑
+- MQTT消息订阅
+- 配置文件管理
+- 备份与恢复机制
+
+验收状态: ✅ 已通过完整验收测试
+
+备份位置: ~/smart_assistant/backups/tts_stable_20251029_225218/
+
+恢复命令:
+bash ~/smart_assistant/backups/tts_stable_20251029_225218/RESTORE.sh
+
+文档:
+- README.md - 使用说明
+- TROUBLESHOOTING.md - 故障排查
+- ACCEPTANCE_REPORT.txt - 验收报告（备份目录中）
+
+维护者: MRwang
+最后验证: 2025-10-29 22:58:03
