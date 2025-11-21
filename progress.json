@@ -1,12 +1,12 @@
 {
   "metadata": {
-    "updated_at": "2025-11-11T15:56:00+8:00",
-    "version": "v1.0-wakeword",
-    "baseline_commit": "TBD (Git未初始化)",
+    "updated_at": "2025-11-21T08:17:00+08:00",
+    "version": "v1.1-memory-dev",
+    "baseline_commit": "8a6c8ba (memory blueprint v1.3)",
     "environment": "raspberry_pi_4b",
     "project_root": "/home/MRwang/smart_assistant"
   },
-  
+
   "milestones": {
     "completed": [
       {
@@ -89,23 +89,47 @@
       }
     ],
     
-    "in_progress": [],
-    
-    "planned": [
+    "in_progress": [
       {
         "id": "M7",
-        "name": "记忆系统MVP",
-        "target_date": "2025-11-20",
+        "name": "Memory Orchestrator实现",
+        "started_at": "2025-11-18",
+        "target_date": "2025-11-30",
         "priority": "P0",
-        "deliverables": [
-          "SQLite数据库表结构",
-          "基础存储API(save/recall)",
-          "记忆服务模块",
-          "单元测试(覆盖率>80%)"
+        "blueprint": "MEMORY_BLUEPRINT.md v1.3",
+        "progress": {
+          "blueprint_design": "completed",
+          "step_1_to_4": "completed",
+          "step_5_models": "completed",
+          "step_6_mqtt_handler": "completed",
+          "step_7_events": "pending",
+          "step_8_http_health": "completed",
+          "step_9_state_machine": "pending",
+          "step_10_ttl_scheduler": "pending"
+        },
+        "completed_deliverables": [
+          "完整实施蓝图 v1.3 (MEMORY_BLUEPRINT.md)",
+          "Pydantic数据模型 + 命令/事件模型",
+          "Slot归一化器(20个标准slots)",
+          "MQTT命令处理器 v3",
+          "HTTP健康检查端点",
+          "22项单元测试(100%通过)",
+          "幂等性缓存(SQLite持久化)",
+          "背压控制(队列+工作线程)"
         ],
-        "depends_on": ["Git仓库初始化"],
-        "reference": "docs/TASKS_CODE.md#MVP"
-      },
+        "pending_deliverables": [
+          "MQTT事件广播完善(Step 7)",
+          "状态机实现(Step 9)",
+          "TTL过期定时任务(Step 10)",
+          "SessionManager集成",
+          "回归测试完成",
+          "生产环境部署"
+        ],
+        "reference": "MEMORY_BLUEPRINT.md#17"
+      }
+    ],
+    
+    "planned": [
       {
         "id": "M8",
         "name": "记忆系统M1",
